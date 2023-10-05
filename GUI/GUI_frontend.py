@@ -1,5 +1,6 @@
-
 # 0. Orient to the data directory
+data_folder = ""
+
 
 # 1. Based on the inventory type chosen for the GUI for the emission calc, give users
 # a dropdown.
@@ -21,4 +22,4 @@
 
 # 7. Based on the inventory type chosen, get the detailed table on associated processes
 # from MOVES default database
-    # - Have a default mapping, but give users to define their own
+# - Have a default mapping, but give users to define their own

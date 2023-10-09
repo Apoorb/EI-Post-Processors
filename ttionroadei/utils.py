@@ -67,7 +67,7 @@ def profile(
             pr.disable()
             # pr.dump_stats(_output_dir_file)
 
-            with open(_output_dir_file, 'w') as f:
+            with open(_output_dir_file, "w") as f:
                 ps = pstats.Stats(pr, stream=f)
                 if strip_dirs:
                     ps.strip_dirs()
@@ -217,9 +217,9 @@ def _get_logger(level, name, filename):
     return logger
 
 
-@profile()
-def connect_to_server_db(database_nm=None, user="moves", password="moves",
-                         host="127.0.0.1", port=3308):
+def connect_to_server_db(
+    database_nm=None, user="moves", password="moves", host="127.0.0.1", port=3306
+):
     """
     Function to connect to a particular database on the server.
     Returns
@@ -241,6 +241,12 @@ def connect_to_server_db(database_nm=None, user="moves", password="moves",
     return conn_
 
 
+@profile()
+def profile_test():
+    a, b = 1, 2
+    a + b
+
+
 if __name__ == "__main__":
     log("test message", level=lg.DEBUG)
     ts("date")
@@ -248,5 +254,6 @@ if __name__ == "__main__":
     cur = conn.cursor()
     cur.execute("SHOW DATABASES")
     dbs = cur.fetchall()
-
     conn.close()
+    profile_test()
+    z = 1

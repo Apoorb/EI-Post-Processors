@@ -1,0 +1,90 @@
+# Global settings that can be configured by the user.
+---
+log_console: true
+log_file: true
+log_filename: csvxmlpostprc
+log_name: csvxmlpostprc
+INV_TYPE:
+  EMS:
+    processID: [1, 2, 9, 10, 11, 12, 13, 15, 16, 17, 90, 91, 93]
+  RF:
+    processID: [18, 19]
+  TEC:
+    pollutantID: [91]
+base_units:
+  mass: Grams
+  energy: J
+  distance: Miles
+MOVES4_Default_DB: movesdb20230615
+MOVES4_Default_TAB:
+  activitytype: Activity type IDs and description
+  emissionprocess: Emission process IDs, abbreviation, and fullname
+  fueltype: Fuel type
+  pollutant: Pollutant IDs, abbreviation, and fullname
+  roadtype: MOVES road types
+  scc: EPA NEI's SCC code and its decomposition
+  sourceusetype: Source use type IDs and fullname
+sccNei: [22, fuelTypeID, sourceUseTypeID, 00, 80]
+csvxml_act:
+  - area
+  - county
+  - FIPS
+  - year
+  - season
+  - dayType
+  - hour
+  - sccNei
+  - areaTypeID
+  - areaType
+  - funcClassID
+  - funcClass
+  - mvsRoadTypeID
+  - mvsRoadType
+  - sourceUseTypeID
+  - sourceUseType
+  - fuelTypeID
+  - fuelType
+  - actTypeID
+  - actTypeABB
+  - actType
+  - act
+  - actunits
+csvxml_ei:
+  - area
+  - county
+  - FIPS
+  - year
+  - season
+  - dayType
+  - hour
+  - sccNei
+  - areaTypeID
+  - areaType
+  - funcClassID
+  - funcClass
+  - mvsRoadTypeID
+  - mvsRoadType
+  - sourceUseTypeID
+  - sourceUseType
+  - fuelTypeID
+  - fuelType
+  - EISPollutantCode
+  - pollutantID
+  - pollutant
+  - processID
+  - process
+  - emission
+  - emissionunits
+
+aggRows:
+  noHour: Show daily values
+  noProcess: Show emissions for pollutants (without process breakdown)
+  noAreaRoadType: Show the total on-network, total off-network, and total
+csvxml_aggpiv_opts:
+  aggByRdSutFt: Keep base scenario details, road, source use, and fuel type categories. Remove details of hour
+  aggByHrSutFt: Keep base scenario details (Year, County, Season, DayType), hour, source use and fuel type categories. Remove details of road type.
+  aggByHrRd: Keep base scenario details, hour, and road type categories. Remove details of source use and fuel type
+  aggByHr: Keep base scenario details and hour categories. Remove details of source use, fuel, and road type
+  aggByBaseScenario: Keep base scenario details. Remove details of hour, source use, fuel, and road type
+  aggBySccNEI: Aggregate to NEI SCCs. Use for XMls.
+

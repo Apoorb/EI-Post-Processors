@@ -22,5 +22,13 @@ def get_inv_prc():
     ...
 
 
+def write_qalog():
+    ...
+
+
+def write_configYAML():
+    ...
+
+
 if __name__ == "__main__":
     ...

@@ -32,11 +32,11 @@ def actemisconnector():
     ...
 
 
-def detailedcsvgen():
+def checkinputsmain():
     ...
 
 
-def aggxlsxgen():
+def detailedcsvgen():
     ...
 
 
@@ -44,7 +44,7 @@ def aggsccneigen():
     ...
 
 
-def checkinputsmain():
+def aggxlsxgen():
     ...
 
 

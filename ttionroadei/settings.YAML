@@ -3,8 +3,8 @@
 log_console: true
 log_file: true
 log_filename: csvxmlpostprc
-log_name: csvxmlpostprc
-INV_TYPE:
+log_level: 20 # INFO
+INV_TYPES:
   EMS:
     processID: [1, 2, 9, 10, 11, 12, 13, 15, 16, 17, 90, 91, 93]
   RF:

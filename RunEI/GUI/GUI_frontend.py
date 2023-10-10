@@ -5,13 +5,11 @@ This needs to be revised based on how the GUI gets redesigned.
 
 """
 from pathlib import Path
-
+import yaml
 import pandas as pd
 import logging as lg
-
-from ttionroadei.csvxmlpostprc.csvgen import checkinputsmain
-from ttionroadei.utils import log, profile, ts
-from ttionroadei.settings import logs_folder, base_units
+from ttionroadei.utils import _add_handler
+from ttionroadei.csvxmlpostprc.csvgen import filegenmain
 
 # 1. SELECT INPUTS
 ########################################################################################
@@ -21,8 +19,11 @@ ei_folder = ""
 # TODO: Change to MOVES 4 utilities structure. I am using old utilities. I am hard
 #  coding. Handle this through a config file or setting.py. Ideally concatenate the paths
 #  based on the `ei_folder` path.
-
 log_dir = r"C:\Users\a-bibeka\PycharmProjects\EI Post Processors\logs"
+
+logger = lg.getLogger(name=__file__)
+logger = _add_handler(dir=log_dir, logger=logger)
+
 onroadei_dir = Path(
     r"C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_hgb_mvs31"
     r"\2020AERR_hgb_mvs31_p\HGB\2020\swkd\Outputs\Emission_output"
@@ -119,7 +120,7 @@ input_units = {
     "energy": "J",
     "distance": "Miles",
 }  # Read from previous module!
-output_units = base_units
+output_units = input_units
 conversion_factor = {"mass": 1, "energy": 1, "distance": 1}
 
 # 6. Based on the area chosen, run code in the backend to get the road-type mapping.
@@ -147,16 +148,12 @@ temp_tdm_hpms_rdtype = temp_tdm_hpms_rdtype.rename(
 
 # The TDM road type for selected area
 # TODO: add error checking to see if the area exisits in the mapping file.
-area_selected = [
-    "ATX",
-]
 try:
     temp_tdm_hpms_rdtype1 = temp_tdm_hpms_rdtype[lambda df: df.area.isin(area_selected)]
     if len(temp_tdm_hpms_rdtype1) == 0:
-        raise ValueError
+        raise ValueError("Empty raod type mapping file.")
 except ValueError as verr:
-    log(f"Area type not in the road type file. {verr}", level=lg.ERROR)
-
+    logger.error(msg=f"Area type not in the road type file. {verr}")
 use_tdm_area_rdtype = True
 if not use_tdm_area_rdtype:
     use_hpms_area_rdtype = False
@@ -174,40 +171,82 @@ gendetailedcsvfiles = True
 genaggpivfiles = True
 genxmlfile = True
 
+document_id = ""
+document_title = ""
+author_name = ""
+user_identifier = ""
+organization_name = ""
+program_system_code = ""
+comment = ""
+creation_datetime = ""
+submission_type = "QA"
+data_category = ""
+data_flow_name = ""
+model = ""
+model_version = ""
+submittal_comment = ""
 if genxmlfile:
     which_years = ()
     which_pollutants = ()
-
-    document_id = ""
-    document_title = ""
-    author_name = ""
-    user_identifier = ""
-    organization_name = ""
-    program_system_code = ""
-    comment = ""
-    creation_datetime = ""
-    submission_type = "QA"
-    data_category = ""
-    data_flow_name = ""
-    model = ""
-    model_version = ""
-    submittal_comment = ""
 
 
 def checkparams():
     ...
 
 
+def saveparam():
+    # Define a dictionary to hold all the variables
+    checkparams()
+    variables_dict = {
+        "ei_folder": ei_folder,
+        "log_dir": str(log_dir),
+        "onroadei_dir": str(onroadei_dir),
+        "onroadei_fi": str(onroadei_fi),
+        "offroadei_dir": str(offroadei_dir),
+        "offroadei_fis": {key: str(value) for key, value in offroadei_fis.items()},
+        "transvmt_dir": str(transvmt_dir),
+        "transvmtvht_fi": str(transvmtvht_fi),
+        "offroadact_dir": str(offroadact_dir),
+        "EI_selected": EI_selected,
+        "area_selected": area_selected,
+        "counties_selected": counties_selected,
+        "year_selected": year_selected,
+        "season_selected": season_selected,
+        "daytype_selected": daytype_selected,
+        "pollutants_mrs": pollutants_mrs,
+        "pollutants_selected": pollutants_selected,
+        "input_units": input_units,
+        "output_units": output_units.copy(),
+        "conversion_factor": conversion_factor,
+        "fi_temp_tdm_hpms_rdtype": str(fi_temp_tdm_hpms_rdtype),
+        "temp_tdm_hpms_rdtype1": temp_tdm_hpms_rdtype1.to_dict(orient="index"),
+        "area_selected": area_selected,
+        "use_tdm_area_rdtype": use_tdm_area_rdtype,
+        "gendetailedcsvfiles": gendetailedcsvfiles,
+        "genaggpivfiles": genaggpivfiles,
+        "genxmlfile": genxmlfile,
+    }
+
+    # Define the output YAML file path
+    output_yaml_file = "postProcessorSelection.yaml"
+    output_yaml_file_pa = Path(log_dir).joinpath(output_yaml_file)
+    # Save the variables as YAML
+    with open(output_yaml_file_pa, "w") as yaml_file:
+        yaml.dump(variables_dict, yaml_file, default_flow_style=False)
+    logger.info(msg=f"Variables saved to {str(output_yaml_file_pa)}")
+
+
 # 2. Run GUI
 ########################################################################################
 def runGUI():
-    if gendetailedcsvfiles:
-        ...
-    if genaggpivfiles:
-        ...
-    if genxmlfile:
-        ...
+    logger = lg.getLogger(name=__file__)
+    filegenmain(
+        gendetailedcsvfiles=gendetailedcsvfiles,
+        genaggpivfiles=genaggpivfiles,
+        genxmlfile=genxmlfile,
+    )
 
 
 if __name__ == "__main__":
-    runGUI()
+    saveparam()
+    # runGUI()

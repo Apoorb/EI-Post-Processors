@@ -25,8 +25,28 @@ import warnings
 from contextlib import redirect_stdout
 from pathlib import Path
 import mysql.connector as mariadb
+import pkg_resources
+import yaml
 
-from ttionroadei import settings
+package_name = "ttionroadei"
+try:
+    # Get the path to the settings.yaml file within the package
+    settings_yaml_path = pkg_resources.resource_filename(package_name, "settings.yaml")
+
+    # Read and parse the YAML file
+    with open(settings_yaml_path, "r") as yaml_file:
+        data = yaml.safe_load(yaml_file)
+
+    # Access and use the data from settings.yaml as needed
+    print(data)
+
+except Exception as e:
+    print(f"Error: {e}")
+
+log_console = data.get("log_console")
+log_file = data.get("log_file")
+log_filename = data.get("log_filename")
+log_level = data.get("log_level")
 
 
 def profile(
@@ -60,14 +80,13 @@ def profile(
         @wraps(func)
         def wrapper(*args, **kwargs):
             _output_file = output_file or func.__name__ + ".prof"
-            _output_dir_file = Path(settings.logs_folder).joinpath(_output_file)
             pr = cProfile.Profile()
             pr.enable()
             retval = func(*args, **kwargs)
             pr.disable()
             # pr.dump_stats(_output_dir_file)
 
-            with open(_output_dir_file, "w") as f:
+            with open(_output_file, "w") as f:
                 ps = pstats.Stats(pr, stream=f)
                 if strip_dirs:
                     ps.strip_dirs()
@@ -114,80 +133,16 @@ def ts(style="datetime", template=None):
     return ts
 
 
-def log(message, level=None, name=None, filename=None):
-    """
-    Write a message to the logger.
-
-    This logs to file and/or prints to the console (terminal), depending on
-    the current configuration of settings.log_file and settings.log_console.
-
-    Parameters
-    ----------
-    message : string
-        the message to log
-    level : int
-        one of Python's logger.level constants
-    name : string
-        name of the logger
-    filename : string
-        name of the log file, without file extension
-
-    Returns
-    -------
-    None
-    """
-    if level is None:
-        level = settings.log_level
-    if name is None:
-        name = settings.log_name
-    if filename is None:
-        filename = settings.log_filename
-
-    # if logging to file is turned on
-    if settings.log_file:
-        # get the current logger (or create a new one, if none), then log
-        # message at requested level
-        logger = _get_logger(level=level, name=name, filename=filename)
-        if level == lg.DEBUG:
-            logger.debug(message)
-        elif level == lg.INFO:
-            logger.info(message)
-        elif level == lg.WARNING:
-            logger.warning(message)
-        elif level == lg.ERROR:
-            logger.error(message)
-
-    # if logging to console (terminal window) is turned on
-    if settings.log_console:
-        # prepend timestamp
-        message = f"{ts()} {message}"
-
-        # convert to ascii so it doesn't break windows terminals
-        message = (
-            unicodedata.normalize("NFKD", str(message))
-            .encode("ascii", errors="replace")
-            .decode()
-        )
-
-        # print explicitly to terminal in case jupyter notebook is the stdout
-        if getattr(sys.stdout, "_original_stdstream_copy", None) is not None:
-            # redirect captured pipe back to original
-            os.dup2(sys.stdout._original_stdstream_copy, sys.__stdout__.fileno())
-            sys.stdout._original_stdstream_copy = None
-        with redirect_stdout(sys.__stdout__):
-            print(message, file=sys.__stdout__, flush=True)
-
-
-def _get_logger(level, name, filename):
+def _add_handler(logger, dir, filename=log_filename, log_level=log_level):
     """
     Create a logger or return the current one if already instantiated.
 
     Parameters
     ----------
-    level : int
+    log_level : int
         one of Python's logger.level constants
-    name : string
-        name of the logger
+    logger : lg.Logger
+        The logger
     filename : string
         name of the log file, without file extension
 
@@ -195,25 +150,22 @@ def _get_logger(level, name, filename):
     -------
     logger : logging.logger
     """
-    logger = lg.getLogger(name)
-
     # if a logger with this name is not already set up
     if not getattr(logger, "handler_set", None):
-
         # get today's date and construct a log filename
-        log_filename = Path(settings.logs_folder) / f'{filename}_{ts(style="date")}.log'
-
+        log_filename = Path(dir) / f'{filename}_{ts(style="date")}.log'
         # if the logs folder does not already exist, create it
         log_filename.parent.mkdir(parents=True, exist_ok=True)
-
         # create file handler and log formatter and set them up
         handler = lg.FileHandler(log_filename, encoding="utf-8")
-        formatter = lg.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
+        formatter = lg.Formatter(
+            "%(asctime)s %(levelname)s %(module)s %(funcName)s %(lineno)s %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
         handler.setFormatter(formatter)
         logger.addHandler(handler)
-        logger.setLevel(level)
+        logger.setLevel(log_level)
         logger.handler_set = True
-
     return logger
 
 
@@ -236,7 +188,6 @@ def connect_to_server_db(
             database=database_nm,
         )
     except mariadb.Error as e:
-        log(f"Error connecting to MariaDB Platform: {e}", lg.ERROR)
         sys.exit(1)
     return conn_
 
@@ -248,7 +199,6 @@ def profile_test():
 
 
 if __name__ == "__main__":
-    log("test message", level=lg.DEBUG)
     ts("date")
     conn = connect_to_server_db()
     cur = conn.cursor()

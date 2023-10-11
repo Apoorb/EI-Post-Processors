@@ -4,10 +4,6 @@
 """
 
 
-def areardtypeqc():
-    ...
-
-
 def actqc():
     ...
 
@@ -24,15 +20,7 @@ def emisprc():
     ...
 
 
-def aggpivdat():
-    ...
-
-
 def actemisconnector():
-    ...
-
-
-def checkinputsmain():
     ...
 
 
@@ -48,7 +36,8 @@ def aggxlsxgen():
     ...
 
 
-def filegenmain():
+def filegenmain(gendetailedcsvfiles, genaggpivfiles, genxmlfile, params):
+    a = 1
     ...
 
 

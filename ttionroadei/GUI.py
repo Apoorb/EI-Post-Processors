@@ -8,27 +8,33 @@ from pathlib import Path
 import yaml
 import pandas as pd
 import logging as lg
-from ttionroadei.utils import _add_handler
-from ttionroadei.csvxmlpostprc.csvgen import filegenmain
+import pkg_resources
+import yaml
+
+from ttionroadei.utils import _add_handler, settings, get_moves_defaults
+from ttionroadei.csvxmlpostprc.csvxmlgen import CsvXmlGen
 
 
 class PostProcessorGUI:
-    def __init__(self, ei_folder=None, log_dir=r"./logs"):
+    def __init__(self, ei_base_dir=None, log_dir=r"./logs"):
         ##### Paths ####################################################################
         # TODO: Change to MOVES 4 utilities structure. I am using old utilities. I am
         #  hard coding. Handle this through a config file or setting.py. Ideally
-        #  concatenate the paths based on the `ei_folder` path.
-        self.onroadei_fi = ""
-        self.offroadei_dir = ""
-        self.transvmt_dir = ""
+        #  concatenate the paths based on the `ei_base_dir` path.
+        self.mvs4default_tables = dict()
+        self.ei_base_dir = ""
+        self.out_dir = ""
+        self.out_dir_pp = ""
+        self.ei_fis_EMS = dict()
+        self.ei_fis_RF = dict()
+        self.ei_fis_TEC = dict()
         self.transvmtvht_fi = ""
         self.offroadact_dir = ""
-        self.offroadei_fis = dict()
-        self.offroadact_fis = dict()
+        self.act_fis = dict()
         self.fi_temp_tdm_hpms_rdtype = ""
         self.output_yaml_file = ""
         self.onroadei_dir = ""
-        self.ei_folder = None
+        self.ei_base_dir = None
         self.log_dir = log_dir
         self.logger = lg.getLogger(name=__file__)
         self.logger = _add_handler(dir=self.log_dir, logger=self.logger)
@@ -45,18 +51,18 @@ class PostProcessorGUI:
         self.season_selected = tuple()
         self.daytype_dropdown = tuple()
         self.daytype_selected = tuple()
-        self.pollutants_dropdown = tuple()
-        self.pollutants_selected = tuple()
+        self.pollutant_codes_dropdown = tuple()
+        # TODO: Need a mapping file to MOVES pollutantIDs
+        self.pollutant_map = dict()
+        self.pollutant_codes_selected = tuple()
+        self.pollutant_map_codes_selected = dict()
         self.use_tdm_area_rdtype = True
-        self.use_custom_area_rdtype = False
         self.use_hpms_area_rdtype = False
-        self.temp_tdm_hpms_rdtype = pd.DataFrame()
-        self.temp_tdm_hpms_rdtype_flt = pd.DataFrame()
-        self.user_defined_area_rdtype = pd.DataFrame()
+        self.tdm_hpms_rdtype = pd.DataFrame()
+        self.tdm_hpms_rdtype_flt = pd.DataFrame()
         self.conversion_factor = dict()
         self.input_units = dict()
         self.output_units = dict()
-        self.pollutants_mrs = dict()
 
         # TODO: Ask the user for XML header details.
         self.gendetailedcsvfiles = True
@@ -80,6 +86,54 @@ class PostProcessorGUI:
         if self.genxmlfile:
             self.which_years = ()
             self.which_pollutants = ()
+
+    def set_paths(self):
+        self.ei_dir = Path(
+            r"E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_"
+            r"\_Tasks\Task 3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output"
+        )
+        self.ei_fis_EMS = {
+            "OnRoad": self.ei_dir.joinpath("emission_output_VMT.txt"),
+            "APU": self.ei_dir.joinpath("emission_output_APU.txt"),
+            "ONI": self.ei_dir.joinpath("emission_output_ONI.txt"),
+            "SHEI": self.ei_dir.joinpath("emission_output_SHEI.txt"),
+            "SHP": self.ei_dir.joinpath("emission_output_SHP.txt"),
+            "Starts": self.ei_dir.joinpath("emission_output_Starts.txt"),
+        }
+        self.ei_fis_RF = {
+            cat: file_path.parent.joinpath("RF_" + file_path.name)
+            for cat, file_path in self.ei_fis_EMS.items()
+            if cat != "SHP"
+        }
+        self.ei_fis_TEC = {
+            cat: file_path.parent.joinpath("TEC_" + file_path.name)
+            for cat, file_path in self.ei_fis_EMS.items()
+            if cat != "SHP"
+        }
+        self.transvmtvht_fi = Path(self.ei_dir).parent.joinpath(
+            "Summarized_output", "VMT_st_ft_Summary.txt"
+        )
+        self.offroadact_dir = Path(self.ei_dir).parent.joinpath("Activity_output")
+        self.act_fis = {
+            "OnRoad": self.transvmtvht_fi,
+            "AdjSHP": self.offroadact_dir.joinpath("Adjusted_SHP.txt"),
+            "TotSHP": self.offroadact_dir.joinpath("SHP.txt"),
+            "ONI": self.offroadact_dir.joinpath("ONI.txt"),
+            "APU_SHEI": self.offroadact_dir.joinpath("Hotelling_Hours.txt"),
+            "Starts": self.offroadact_dir.joinpath("Start.txt"),
+        }
+        # TODO: Read from CG's Database.
+        self.fi_temp_tdm_hpms_rdtype = (
+            r"E:\Texas A&M Transportation Institute"
+            r"\HMP - TCEQ Projects - FY2024_Utility_Development\Resources\Input Data"
+            r"\Road Type Mapping\RoadType_Designation.csv"
+        )
+        self.output_yaml_file = Path(self.log_dir).joinpath(
+            "postProcessorSelection.yaml"
+        )
+        self.out_dir = Path(r"C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24")
+        self.out_dir_pp = self.out_dir.joinpath("Summary")
+        self.out_dir_pp.mkdir(exist_ok=True)
 
     def provide_options(self):
         # 1. Based on the inventory type chosen for the GUI for the emission calc (
@@ -129,81 +183,52 @@ class PostProcessorGUI:
         ]
         self.year_dropdown = [2020, 2026]
         self.season_dropdown = [
-            "s",
+            "p1",
         ]
         self.daytype_dropdown = [
-            "wk",
+            "fr",
         ]
-        self.pollutants_mrs = ["CO", "NOx", "PM10"]
-        self.pollutants_dropdown = self.pollutants_mrs
+        self.pollutant_codes_dropdown = ["CO", "NOx", "PM10"]
+        # ToDo: Need a mapping file for pollutant codes to pollutants
+        # FixMe: How are me going to get this inputs?
+        #   - NEI pollutants?
+        #   - MOVES pollutants?
+        #   - Custom pollutants?
+        self.pollutant_map = {
+            "CO": [2],
+            "NOx": [3],
+            "PM10": [100, 106, 107],
+            "TEC": [91],  # Should always be selected for TEC EIs
+        }
         # TODO: Give user default option for output units.
         #  Read the units of emission module output.
         self.input_units = {
             "mass": "Grams",
             "energy": "J",
-            "distance": "Miles",
         }  # Read from previous module!
-        self.output_units = self.input_units
-        self.conversion_factor = {"mass": 1, "energy": 1, "distance": 1}
+        self.output_units = self.input_units  # Fixme change this
+        self.conversion_factor = {"mass": 1, "energy": 1}
+        # TODO: Use MOVES units combinations
 
     def set_param(self):
-        self.onroadei_dir = Path(
-            r"C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24"
-            r"\2020AERR_hgb_mvs31"
-            r"\2020AERR_hgb_mvs31_p\HGB\2020\swkd\Outputs\Emission_output"
-        )
-        self.onroadei_fi = self.onroadei_dir.joinpath("emission_output_VMT.txt")
-        self.offroadei_dir = Path(
-            r"C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24"
-            r"\2020AERR_hgb_mvs31"
-            r"\2020AERR_hgb_mvs31_p\HGB\2020\swkd\Outputs\Emission_output"
-        )
-        self.offroadei_fis = {
-            "APU": self.offroadei_dir.joinpath("emission_output_APU.txt"),
-            "ONI": self.offroadei_dir.joinpath("emission_output_ONI.txt"),
-            "SHEI": self.offroadei_dir.joinpath("emission_output_SHEI.txt"),
-            "SHP": self.offroadei_dir.joinpath("emission_output_SHP.txt"),
-            "Starts": self.offroadei_dir.joinpath("emission_output_Starts.txt"),
-        }
-        self.transvmt_dir = Path(
-            r"C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24"
-            r"\2020AERR_hgb_mvs31"
-            r"\2020AERR_hgb_mvs31_p\HGB\2020\swkd\Outputs\Summarized_output"
-        )
-        self.transvmtvht_fi = self.transvmt_dir.joinpath("VMT_st_ft_Summary.txt")
-        self.offroadact_dir = Path(
-            r"C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24"
-            r"\2020AERR_hgb_mvs31"
-            r"\2020AERR_hgb_mvs31_p\HGB\2020\swkd\Outputs\Activity_output"
-        )
-        self.offroadact_fis = {
-            "AdjSHP": self.offroadei_dir.joinpath("Adjusted_SHP.txt"),
-            "SHP": self.offroadei_dir.joinpath("SHP.txt"),
-            "ONI": self.offroadei_dir.joinpath("ONI.txt"),
-            "APU_SHEI": self.offroadei_dir.joinpath("Hotelling_Hours.txt"),
-            "Starts": self.offroadei_dir.joinpath("Start.txt"),
-        }
-        self.fi_temp_tdm_hpms_rdtype = (
-            r"E:\Texas A&M Transportation Institute"
-            r"\HMP - TCEQ Projects - FY2024_Utility_Development\Resources\Input Data"
-            r"\Road Type Mapping\RoadType_Designation.csv"
-        )
-        self.output_yaml_file = Path(self.log_dir).joinpath(
-            "postProcessorSelection.yaml"
-        )
-        self.ei_selected = [
-            "EMS",
-        ]
+        self.ei_selected = ["EMS", "RF", "TEC"]
         self.area_selected = "HGB"
-        self.counties_selected = self.counties_dropdown
+        self.counties_selected = [
+            48201,
+            48039,
+            48157,
+        ]
         self.year_selected = [
-            2020,
+            2026,
         ]
-        self.season_selected = self.season_dropdown
-        self.daytype_selected = self.daytype_dropdown
-        self.pollutants_selected = [
-            "CO",
-        ]
+        self.season_selected = ("p1",)
+        self.daytype_selected = ("fr",)
+        self.pollutant_codes_selected = ["CO", "NOx", "TEC"]
+        self.pollutant_map_codes_selected = {
+            k: v
+            for k, v in self.pollutant_map.items()
+            if k in self.pollutant_codes_selected
+        }
         # 6. Based on the area chosen, run code in the backend to get the road-type
         # mapping.
         # TODO: Ask the user the road type info needed (MOVES or TDM or HPMS?). Use
@@ -213,6 +238,14 @@ class PostProcessorGUI:
         #  following columns:
         #  areaTypeId, areaType, roadTypeId, roadType, mvSroadTypeId, mvSroadType
         self._get_roadtype()
+        self.mvs4default_tables = get_moves_defaults(
+            database_nm=settings.get("MOVES4_Default_DB"),
+            user="moves",
+            password="moves",
+            host="127.0.0.1",
+            port=3308,
+        )
+
         # 7. Specific the options that need to be generated:
         # a) Detailed CSV files
         # b) Aggregated and Pivoted CSV files
@@ -223,13 +256,10 @@ class PostProcessorGUI:
         # TODO: add error checking to see if the area exisits in the mapping file.
         self.use_tdm_area_rdtype = True
         self.use_hpms_area_rdtype = False
-        self.use_moves_area_rdtype = False
         if self.use_tdm_area_rdtype or self.use_hpms_area_rdtype:
-            self.temp_tdm_hpms_rdtype = pd.read_csv(self.fi_temp_tdm_hpms_rdtype)
-            self.temp_tdm_hpms_rdtype = self.temp_tdm_hpms_rdtype.drop(
-                columns=["MOVES_RoadType"]
-            )
-            self.temp_tdm_hpms_rdtype = self.temp_tdm_hpms_rdtype.rename(
+            self.tdm_hpms_rdtype = pd.read_csv(self.fi_temp_tdm_hpms_rdtype)
+            self.tdm_hpms_rdtype = self.tdm_hpms_rdtype.drop(columns=["MOVES_RoadType"])
+            self.tdm_hpms_rdtype = self.tdm_hpms_rdtype.rename(
                 columns={
                     "Area": "area",
                     "TDM_FunctionClass_Code": "funcClassID",
@@ -239,51 +269,46 @@ class PostProcessorGUI:
                     "MOVES_RoadTypeID": "mvsRoadTypeID",
                 }
             )
+        area_sel = ""
         if self.use_tdm_area_rdtype:
-            try:
-                self.temp_tdm_hpms_rdtype_flt = self.temp_tdm_hpms_rdtype[
-                    lambda df: df.area == self.area_selected
-                ]
-                if len(self.temp_tdm_hpms_rdtype_flt) == 0:
-                    raise ValueError("Empty raod type mapping file.")
-            except ValueError as verr:
-                self.logger.error(msg=f"Area type not in the road type file. {verr}")
+            area_sel = self.area_selected
+        elif self.use_hpms_area_rdtype:
+            area_sel = "VLink"
+        else:
+            area_sel = ""
+        try:
+            self.tdm_hpms_rdtype_flt = self.tdm_hpms_rdtype[
+                lambda df: df.area == area_sel
+            ].reset_index(drop=True)
+            if (area_sel != "") and (len(self.tdm_hpms_rdtype_flt) == 0):
+                raise ValueError("Empty raod type mapping file.")
+        except ValueError as verr:
+            self.logger.error(msg=f"Area type not in the road type file. {verr}")
+        off_net = pd.DataFrame(
+            {
+                "area": [self.tdm_hpms_rdtype_flt.loc[0, "area"]],
+                "funcClassID": [-99],
+                "areaTypeID": [-99],
+                "areaType": ["N/A"],
+                "funcClass": ["Off-Network"],
+                "mvsRoadTypeID": [1],
+            }
+        )
+        self.tdm_hpms_rdtype_flt = pd.concat(
+            [self.tdm_hpms_rdtype_flt, off_net]
+        ).reset_index(drop=True)
 
-        if self.use_hpms_area_rdtype:
-            self.temp_tdm_hpms_rdtype_flt = self.temp_tdm_hpms_rdtype[
-                lambda df: df.area == "VLink"
-            ]
-
-        if self.use_moves_area_rdtype:
-            ...
-            # TODO: do something
-
-    def save_param(self):
+    def save_params(self):
         # Define a dictionary to hold all the variables
         self.check_params()
         variables_dict = {
-            "ei_folder": self.ei_folder,
-            "log_dir": str(self.log_dir),
-            "onroadei_dir": str(self.onroadei_dir),
-            "onroadei_fi": str(self.onroadei_fi),
-            "offroadei_dir": str(self.offroadei_dir),
-            "offroadei_fis": {
-                key: str(value) for key, value in self.offroadei_fis.items()
-            },
-            "offroadact_dir": str(self.offroadact_dir),
-            "offroadact_fis": {
-                key: str(value) for key, value in self.offroadact_fis.items()
-            },
-            "transvmt_dir": str(self.transvmt_dir),
-            "transvmtvht_fi": str(self.transvmtvht_fi),
             "ei_selected": self.ei_selected,
             "area_selected": self.area_selected,
             "counties_selected": self.counties_selected,
             "year_selected": self.year_selected,
             "season_selected": self.season_selected,
             "daytype_selected": self.daytype_selected,
-            "pollutants_mrs": self.pollutants_mrs,
-            "pollutants_selected": self.pollutants_selected,
+            "pollutant_map_codes_selected": self.pollutant_map_codes_selected,
             "input_units": self.input_units,
             "output_units": self.output_units.copy(),
             "conversion_factor": self.conversion_factor,
@@ -292,12 +317,22 @@ class PostProcessorGUI:
             "gendetailedcsvfiles": self.gendetailedcsvfiles,
             "genaggpivfiles": self.genaggpivfiles,
             "genxmlfile": self.genxmlfile,
+            "ei_base_dir": self.ei_base_dir,
+            "log_dir": str(self.log_dir),
+            "ei_dir": str(self.ei_dir),
+            "summary_dir": str(self.out_dir_pp),
+            "ei_fis_EMS": {key: str(value) for key, value in self.ei_fis_EMS.items()},
+            "ei_fis_RF": {key: str(value) for key, value in self.ei_fis_RF.items()},
+            "ei_fis_TEC": {key: str(value) for key, value in self.ei_fis_TEC.items()},
+            "act_fis": {key: str(value) for key, value in self.act_fis.items()},
         }
         # Define the output YAML file path
 
         # Save the variables as YAML
         with open(self.output_yaml_file, "w") as yaml_file:
-            yaml.dump(variables_dict, yaml_file, default_flow_style=False)
+            yaml.dump(
+                variables_dict, yaml_file, default_flow_style=False, sort_keys=False
+            )
         self.logger.info(msg=f"Variables saved to {str(self.output_yaml_file)}")
 
     def get_param(self, param):
@@ -307,18 +342,22 @@ class PostProcessorGUI:
         ...
 
     def run_pp(self):
-        filegenmain(
-            gendetailedcsvfiles=self.gendetailedcsvfiles,
-            genaggpivfiles=self.genaggpivfiles,
-            genxmlfile=self.genxmlfile,
-            params=ppgui,
-        )
+        csvxmlgen = CsvXmlGen(self)
+        csvxmlgen.paramqc()
+        if self.gendetailedcsvfiles:
+            csvxmlgen.detailedcsvgen()
+        if self.genaggpivfiles:
+            csvxmlgen.aggxlsxgen()
+        if self.genxmlfile:
+            csvxmlgen.aggsccneigen()
 
 
 if __name__ == "__main__":
     ppgui = PostProcessorGUI()
+    ppgui.set_paths()
     ppgui.provide_options()
     ppgui.set_param()
     ppgui.check_params()
-    ppgui.save_param()
+    ppgui.save_params()
     ppgui.run_pp()
+    ppgui.get_param()

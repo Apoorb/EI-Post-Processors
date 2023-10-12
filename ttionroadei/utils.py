@@ -16,15 +16,13 @@
 import cProfile
 import pstats
 from functools import wraps
+import pandas as pd
+import numpy as np
 import datetime as dt
 import logging as lg
-import os
 import sys
-import unicodedata
-import warnings
-from contextlib import redirect_stdout
 from pathlib import Path
-import mysql.connector as mariadb
+from sqlalchemy import create_engine
 import pkg_resources
 import yaml
 
@@ -32,21 +30,17 @@ package_name = "ttionroadei"
 try:
     # Get the path to the settings.yaml file within the package
     settings_yaml_path = pkg_resources.resource_filename(package_name, "settings.yaml")
-
     # Read and parse the YAML file
     with open(settings_yaml_path, "r") as yaml_file:
-        data = yaml.safe_load(yaml_file)
-
-    # Access and use the data from settings.yaml as needed
-    print(data)
-
+        settings = yaml.safe_load(yaml_file)
 except Exception as e:
     print(f"Error: {e}")
 
-log_console = data.get("log_console")
-log_file = data.get("log_file")
-log_filename = data.get("log_filename")
-log_level = data.get("log_level")
+log_console = settings.get("log_console")
+log_file = settings.get("log_file")
+log_filename = settings.get("log_filename")
+log_level = settings.get("log_level")
+mvs4defaultdb = settings.get("MOVES4_Default_DB")
 
 
 def profile(
@@ -169,27 +163,108 @@ def _add_handler(logger, dir, filename=log_filename, log_level=log_level):
     return logger
 
 
-def connect_to_server_db(
-    database_nm=None, user="moves", password="moves", host="127.0.0.1", port=3306
+def get_moves_defaults(
+    database_nm=mvs4defaultdb,
+    user="moves",
+    password="moves",
+    host="127.0.0.1",
+    port=3306,
 ):
-    """
-    Function to connect to a particular database on the server.
-    Returns
-    -------
-    conn_: mariadb.connection
-        Connection object to access the data in MariaDB Server.
-    """
-    try:
-        conn_ = mariadb.connect(
-            user=user,
-            password=password,
-            host=host,
-            port=port,
-            database=database_nm,
+    db_url = f"mysql+pymysql://{user}:{password}@{host}:{port}/{database_nm}"
+    engine = create_engine(db_url)
+    conn = engine.connect()
+
+    emisprc = pd.read_sql(
+        "SELECT processID, processName, shortName processABB  FROM emissionprocess WHERE "
+        "isAffectedByOnroad = 1",
+        conn,
+    )
+    pollutants = pd.read_sql(
+        "SELECT pollutantID, pollutantName, shortName, NEIPollutantCode, energyOrMass "
+        "FROM pollutant WHERE isAffectedByOnroad = 1",
+        conn,
+    )
+    moves_roadtypes = pd.read_sql(
+        "SELECT roadTypeID, roadDesc " "FROM roadtype WHERE isAffectedByOnroad = 1",
+        conn,
+    )
+    moves_sut = pd.read_sql(
+        "SELECT sourceTypeID, sourceTypeName " "FROM sourceusetype",
+        conn,
+    )
+    moves_ft = pd.read_sql(
+        "SELECT fuelTypeID, fuelTypeDesc " "FROM fueltype",
+        conn,
+    )
+    conn.close()
+    return {
+        "emisprc": emisprc,
+        "pollutants": pollutants,
+        "moves_roadtypes": moves_roadtypes,
+        "moves_sut": moves_sut,
+        "moves_ft": moves_ft,
+    }
+
+
+def create_sutft_lab():
+    sut = {
+        11: "MC",
+        21: "PC",
+        31: "PT",
+        32: "LCT",
+        41: "OBus",
+        42: "TBus",
+        43: "SBus",
+        51: "RT",
+        52: "SuShT",
+        53: "SuLhT",
+        54: "MH",
+        61: "CShT",
+        62: "CLhT",
+    }
+    # , 3: "CNG", 4: "LPG", 5: "E85", 9: "ELEC"
+    fueltype = {1: "G", 2: "D"}
+    sut_df = pd.DataFrame({"sourceUseTypeID": sut.keys()})
+    sutft = (
+        sut_df.assign(
+            fuelTypeID=lambda df: np.select(
+                [
+                    df.sourceUseTypeID == 11,
+                    df.sourceUseTypeID == 62,
+                    df.sourceUseTypeID != 11,
+                ],
+                [{1}, {2}, {1, 2}],
+                np.nan,
+            )
         )
-    except mariadb.Error as e:
-        sys.exit(1)
-    return conn_
+        .explode("fuelTypeID")
+        .reset_index(drop=True)
+        .assign(
+            sut_lab=lambda df: df.sourceUseTypeID.map(sut),
+            fueltype_lab=lambda df: df.fuelTypeID.map(fueltype),
+            sutFtLab=lambda df: df.sut_lab + "_" + df.fueltype_lab,
+        )
+        .filter(items=["sourceUseTypeID", "fuelTypeID", "sutFtLab"])
+    )
+    return sutft
+
+
+def create_mvs_rdtype_lab():
+    pd.DataFrame(
+        {
+            "mvsRoadTypeID": [1, 2, 3, 4, 5],
+            "mvsRoadLab": ["offNet", "rurRes", "rurUnRes", "urbRes", "urbUnRes"],
+        }
+    )
+
+
+def create_mvs_rdtype_lab():
+    pd.DataFrame(
+        {
+            "mvsRoadTypeID": [1, 2, 3, 4, 5],
+            "mvsRoadLab": ["offNet", "rurRes", "rurUnRes", "urbRes", "urbUnRes"],
+        }
+    )
 
 
 @profile()
@@ -200,10 +275,7 @@ def profile_test():
 
 if __name__ == "__main__":
     ts("date")
-    conn = connect_to_server_db()
-    cur = conn.cursor()
-    cur.execute("SHOW DATABASES")
-    dbs = cur.fetchall()
-    conn.close()
+    get_moves_defaults(port=3308)
+    get_moves_defaults()
     profile_test()
     z = 1

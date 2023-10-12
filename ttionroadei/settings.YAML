@@ -11,10 +11,6 @@ INV_TYPES:
     processID: [18, 19]
   TEC:
     pollutantID: [91]
-base_units:
-  mass: Grams
-  energy: J
-  distance: Miles
 MOVES4_Default_DB: movesdb20230615
 MOVES4_Default_TAB:
   activitytype: Activity type IDs and description
@@ -25,6 +21,16 @@ MOVES4_Default_TAB:
   scc: EPA NEI's SCC code and its decomposition
   sourceusetype: Source use type IDs and fullname
 sccNei: [22, fuelTypeID, sourceUseTypeID, 00, 80]
+activities:
+  VMT: miles
+  VHT: hours
+  Speed: mph
+  Starts: starts
+  AdjSHP: hours
+  TotSHP: hours
+  ONI: hours
+  SHEI: hours
+  APU: hours
 csvxml_act:
   - area
   - county
@@ -44,11 +50,10 @@ csvxml_act:
   - sourceUseType
   - fuelTypeID
   - fuelType
-  - actTypeID
   - actTypeABB
   - actType
-  - act
-  - actunits
+  - activity
+  - activityunits
 csvxml_ei:
   - area
   - county
@@ -68,7 +73,7 @@ csvxml_ei:
   - sourceUseType
   - fuelTypeID
   - fuelType
-  - EISPollutantCode
+  - pollutantCode # Custom pollutants with multiple MOVES pollutantID such as PM10
   - pollutantID
   - pollutant
   - processID

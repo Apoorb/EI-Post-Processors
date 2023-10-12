@@ -7,7 +7,7 @@ import yaml
 import pandas as pd
 import logging as lg
 import ttionroadei
-from ttionroadei.utils import _add_handler, settings, create_sutft_lab
+from ttionroadei.utils import _add_handler, settings
 
 
 class CsvXmlGen:
@@ -191,8 +191,19 @@ class CsvXmlGen:
         act = self._actprc()
         emis = self._emisprc()
         a = 1
-        create_sutft_lab()
-        self.mvs4default_tables
+        emisprc = self.mvs4default_tables["emisprc"].drop(columns="processName")
+        moves_roadtypes = self.mvs4default_tables["moves_roadtypes"].drop(columns="mvsRoadType")
+        moves_sut = self.mvs4default_tables["moves_sut"].drop(columns="sourceTypeName")
+        moves_ft = self.mvs4default_tables["moves_ft"].drop(columns="fuelTypeDesc")
+
+        act1 = act.merge(moves_roadtypes, on="mvsRoadTypeID"
+                          ).merge(moves_sut, on="sourceUseTypeID"
+                                  ).merge(moves_ft, on="fuelTypeID")
+
+        emis1 = emis.merge(emisprc, on="processID", how="left"
+                  ).merge(moves_roadtypes, on="mvsRoadTypeID"
+                          ).merge(moves_sut, on="sourceUseTypeID"
+                                  ).merge(moves_ft, on="fuelTypeID")
 
         # self._actemisconnector(act, emis)
 

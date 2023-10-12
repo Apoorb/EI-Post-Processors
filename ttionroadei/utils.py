@@ -13,6 +13,7 @@
 
 
 """General utility functions."""
+from io import StringIO
 import cProfile
 import pstats
 from functools import wraps
@@ -184,18 +185,57 @@ def get_moves_defaults(
         "FROM pollutant WHERE isAffectedByOnroad = 1",
         conn,
     )
+    rdlab = pd.DataFrame(
+        {
+            "mvsRoadTypeID": [1, 2, 3, 4, 5],
+            "mvsRoadLab": ["offNet", "rurRes", "rurUnRes", "urbRes", "urbUnRes"],
+        }
+    )
     moves_roadtypes = pd.read_sql(
-        "SELECT roadTypeID, roadDesc " "FROM roadtype WHERE isAffectedByOnroad = 1",
+        "SELECT roadTypeID mvsRoadTypeID, roadDesc mvsRoadType "
+        "FROM roadtype WHERE isAffectedByOnroad = 1",
         conn,
+    ).merge(rdlab, on="mvsRoadTypeID")
+    sut_lab = pd.read_csv(
+        StringIO(
+            """sourceUseTypeID, sutLab
+        11, MC
+        21, PC
+        31, PT
+        32, LCT
+        41, OBus
+        42, TBus
+        43, SBus
+        51, RT
+        52, SuShT
+        53, SuLhT
+        54, MH
+        61, CShT
+        62, CLhT
+    """
+        )
     )
+    ft_lab = pd.read_csv(
+        StringIO(
+            """fuelTypeID, ftLab
+        1, G
+        2, D
+        3, CNG
+        4, LPG
+        5, E85
+        9, ELEC
+    """
+        )
+    )
+
     moves_sut = pd.read_sql(
-        "SELECT sourceTypeID, sourceTypeName " "FROM sourceusetype",
+        "SELECT sourceTypeID sourceUseTypeID, sourceTypeName FROM sourceusetype",
         conn,
-    )
+    ).merge(sut_lab, on="sourceUseTypeID")
     moves_ft = pd.read_sql(
-        "SELECT fuelTypeID, fuelTypeDesc " "FROM fueltype",
+        "SELECT fuelTypeID, fuelTypeDesc FROM fueltype",
         conn,
-    )
+    ).merge(ft_lab, on="fuelTypeID")
     conn.close()
     return {
         "emisprc": emisprc,
@@ -204,58 +244,6 @@ def get_moves_defaults(
         "moves_sut": moves_sut,
         "moves_ft": moves_ft,
     }
-
-
-def create_sutft_lab():
-    sut = {
-        11: "MC",
-        21: "PC",
-        31: "PT",
-        32: "LCT",
-        41: "OBus",
-        42: "TBus",
-        43: "SBus",
-        51: "RT",
-        52: "SuShT",
-        53: "SuLhT",
-        54: "MH",
-        61: "CShT",
-        62: "CLhT",
-    }
-    # , 3: "CNG", 4: "LPG", 5: "E85", 9: "ELEC"
-    fueltype = {1: "G", 2: "D"}
-    sut_df = pd.DataFrame({"sourceUseTypeID": sut.keys()})
-    sutft = (
-        sut_df.assign(
-            fuelTypeID=lambda df: np.select(
-                [
-                    df.sourceUseTypeID == 11,
-                    df.sourceUseTypeID == 62,
-                    df.sourceUseTypeID != 11,
-                ],
-                [{1}, {2}, {1, 2}],
-                np.nan,
-            )
-        )
-        .explode("fuelTypeID")
-        .reset_index(drop=True)
-        .assign(
-            sut_lab=lambda df: df.sourceUseTypeID.map(sut),
-            fueltype_lab=lambda df: df.fuelTypeID.map(fueltype),
-            sutFtLab=lambda df: df.sut_lab + "_" + df.fueltype_lab,
-        )
-        .filter(items=["sourceUseTypeID", "fuelTypeID", "sutFtLab"])
-    )
-    return sutft
-
-
-def create_mvs_rdtype_lab():
-    pd.DataFrame(
-        {
-            "mvsRoadTypeID": [1, 2, 3, 4, 5],
-            "mvsRoadLab": ["offNet", "rurRes", "rurUnRes", "urbRes", "urbUnRes"],
-        }
-    )
 
 
 def create_mvs_rdtype_lab():

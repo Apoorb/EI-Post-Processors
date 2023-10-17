@@ -11,6 +11,11 @@ INV_TYPES:
     processID: [18, 19]
   TEC:
     pollutantID: [91]
+valid_units:
+    mass: [kg, gram, pound, short_ton]
+    energy: [joule, kilojoule, MBTU]
+    distance: [mile, km],
+}
 MOVES4_Default_DB: movesdb20230615
 MOVES4_Default_TAB:
   activitytype: Activity type IDs and description
@@ -39,7 +44,7 @@ csvxml_act:
   - season
   - dayType
   - hour
-  - sccNei
+  - sccNEI
   - areaTypeID
   - areaType
   - funcClassID
@@ -50,11 +55,13 @@ csvxml_act:
   - sourceUseType
   - fuelTypeID
   - fuelType
+  - sutFtLabel
   - actTypeABB
   - actType
   - activity
   - activityunits
 csvxml_ei:
+  - EIType
   - area
   - county
   - FIPS
@@ -62,7 +69,7 @@ csvxml_ei:
   - season
   - dayType
   - hour
-  - sccNei
+  - sccNEI
   - areaTypeID
   - areaType
   - funcClassID
@@ -73,11 +80,12 @@ csvxml_ei:
   - sourceUseType
   - fuelTypeID
   - fuelType
+  - sutFtLabel
   - pollutantCode # Custom pollutants with multiple MOVES pollutantID such as PM10
   - pollutantID
   - pollutant
   - processID
-  - process
+  - processABB
   - emission
   - emissionunits
 

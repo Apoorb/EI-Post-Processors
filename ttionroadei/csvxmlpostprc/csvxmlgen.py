@@ -15,7 +15,7 @@ class CsvXmlGen:
         self.logger = lg.getLogger(name=__file__)
         self.logger = _add_handler(dir=gui_obj.log_dir, logger=self.logger)
         self.settings = settings
-        self.mvs4default_tables = gui_obj.mvs4default_tables
+        self.labels = gui_obj.labels
         self.area_selected = gui_obj.area_selected
         self.year_selected = gui_obj.year_selected
         self.season_selected = gui_obj.season_selected
@@ -33,14 +33,25 @@ class CsvXmlGen:
         self.output_units = gui_obj.output_units
         self.conversion_factor = gui_obj.conversion_factor
         self.area_rdtype_df = gui_obj.tdm_hpms_rdtype_flt
-        self.summary_dir = gui_obj.out_dir_pp
+        self.sccfun = (
+            lambda df: "22"
+            + df.fuelTypeID.astype(str).str.zfill(2)
+            + df.sourceUseTypeID.astype(str)
+            + "0080"
+        )
+        self.sutFtfun = lambda df: df.sutLab + "_" + df.ftLab
+        self.act_df = pd.DataFrame()
+        self.emis_df = pd.DataFrame()
 
     def paramqc(self):
         a = 1
         ...
 
-    def _emisprc(self):
-        rename_dict = {
+    def _emisprc(self, test_w_mvs3):
+        emis_rename_dict = {
+            "dayType": "dayType",
+            "season": "season",
+            "year": "year",
             "EIType": "EIType",
             "County": "FIPS",
             "Hour": "hour",
@@ -68,7 +79,10 @@ class CsvXmlGen:
             "TEC Emission": "emission",
         }
 
-        id_cols = [
+        emis_id_cols = [
+            "dayType",
+            "season",
+            "year",
             "EIType",
             "FIPS",
             "hour",
@@ -80,14 +94,18 @@ class CsvXmlGen:
             "processID",
             "emissionunits",
         ]
+
+        # FixMe: Update after MOVES 4 main utilities are ready.
+        if test_w_mvs3:
+            emis_id_cols = [i for i in emis_id_cols if i not in ("dayType", "season", "year")]
         ls_df = []
         for ei in self.ei_fis.keys():
             for cat, path in self.ei_fis[ei].items():
                 df = pd.read_csv(path, sep="\t")
                 df["EIType"] = ei
                 df1 = (
-                    df.filter(items=rename_dict.keys())
-                    .rename(columns=rename_dict)
+                    df.filter(items=emis_rename_dict.keys())
+                    .rename(columns=emis_rename_dict)
                     .loc[
                         lambda df: (df.FIPS.isin(self.FIPS_selected))
                         # FixMe: Add the following columns and filters for MOVES 4 utilities
@@ -104,7 +122,7 @@ class CsvXmlGen:
                     df1[["sourceUseTypeID"]] = 62
                     df1[["fuelTypeID"]] = 2
                 df2 = df1.melt(
-                    id_vars=id_cols, var_name="actTypeABB", value_name="emission"
+                    id_vars=emis_id_cols, var_name="actTypeABB", value_name="emission"
                 )
                 ls_df.append(df2)
         _emis = pd.concat(ls_df)
@@ -113,8 +131,11 @@ class CsvXmlGen:
         )
         return _emis1
 
-    def _actprc(self):
-        rename_dict = {
+    def _actprc(self, test_w_mvs3):
+        act_rename_dict = {
+            "dayType": "dayType",
+            "season": "season",
+            "year": "year",
             "County": "FIPS",
             "Hour": "hour",
             "Roadtype": "funcClassID",
@@ -131,7 +152,10 @@ class CsvXmlGen:
             "VHT Calculated": "VHT",
             "Speed": "Speed",
         }
-        id_cols = [
+        act_id_cols = [
+            "dayType",
+            "season",
+            "year",
             "FIPS",
             "hour",
             "funcClassID",
@@ -139,6 +163,9 @@ class CsvXmlGen:
             "sourceUseTypeID",
             "fuelTypeID",
         ]
+        # FixMe: Update after MOVES 4 main utilities are ready.
+        if test_w_mvs3:
+            act_id_cols = [i for i in act_id_cols if i not in ("dayType", "season", "year")]
         ls_df = []
         for cat, path in self.act_fis.items():
             if cat == "TotSHP":
@@ -146,8 +173,8 @@ class CsvXmlGen:
                 continue
             df = pd.read_csv(path, sep="\t")
             df1 = (
-                df.filter(items=rename_dict.keys())
-                .rename(columns=rename_dict)
+                df.filter(items=act_rename_dict.keys())
+                .rename(columns=act_rename_dict)
                 .loc[
                     lambda df: (df.FIPS.isin(self.FIPS_selected))
                     # FixMe: Add the following columns and filters for MOVES 4 utilities
@@ -165,7 +192,7 @@ class CsvXmlGen:
                 df1[["sourceUseTypeID"]] = 62
                 df1[["fuelTypeID"]] = 2
             df2 = df1.melt(
-                id_vars=id_cols, var_name="actTypeABB", value_name="activity"
+                id_vars=act_id_cols, var_name="actTypeABB", value_name="activity"
             )
             ls_df.append(df2)
         _act = pd.concat(ls_df)
@@ -174,9 +201,6 @@ class CsvXmlGen:
             self.area_rdtype_df, on=["funcClassID", "areaTypeID"], how="left"
         )
         return _act1
-
-    def _actemisconnector(self, act, emis):
-        ...
 
     def _actqc(self):
         ...
@@ -187,27 +211,67 @@ class CsvXmlGen:
     def _outputsqc(self):
         ...
 
-    def detailedcsvgen(self):
-        act = self._actprc()
-        emis = self._emisprc()
-        a = 1
-        emisprc = self.mvs4default_tables["emisprc"].drop(columns="processName")
-        moves_roadtypes = self.mvs4default_tables["moves_roadtypes"].drop(columns="mvsRoadType")
-        moves_sut = self.mvs4default_tables["moves_sut"].drop(columns="sourceTypeName")
-        moves_ft = self.mvs4default_tables["moves_ft"].drop(columns="fuelTypeDesc")
+    def act_add_labs(self, df):
+        return (
+            (
+                df.merge(self.labels["moves_roadtypes"], on="mvsRoadTypeID")
+                .merge(self.labels["moves_sut"], on="sourceUseTypeID")
+                .merge(self.labels["moves_ft"], on="fuelTypeID")
+                .merge(self.labels["act_lab"], on="actTypeABB")
+                .merge(self.labels["county"], on="FIPS")
+            )
+            .assign(
+                sccNEI=lambda df: self.sccfun(df),
+                sutFtLabel=lambda df: self.sutFtfun(df),
+            )
+            .filter(items=self.settings["csvxml_act"])
+        )
 
-        act1 = act.merge(moves_roadtypes, on="mvsRoadTypeID"
-                          ).merge(moves_sut, on="sourceUseTypeID"
-                                  ).merge(moves_ft, on="fuelTypeID")
+    def emis_add_labs(self, df):
+        return (
+            df.merge(
+                self.labels["emisprc"].drop(columns="processName"),
+                on="processID",
+                how="left",
+            )
+            .merge(self.labels["moves_roadtypes"], on="mvsRoadTypeID")
+            .merge(self.labels["moves_sut"], on="sourceUseTypeID")
+            .merge(self.labels["moves_ft"], on="fuelTypeID")
+            .merge(self.labels["county"], on="FIPS")
+            .assign(
+                sccNEI=lambda df: self.sccfun(df),
+                sutFtLabel=lambda df: self.sutFtfun(df),
+            )
+            .filter(items=self.settings["csvxml_ei"])
+        )
 
-        emis1 = emis.merge(emisprc, on="processID", how="left"
-                  ).merge(moves_roadtypes, on="mvsRoadTypeID"
-                          ).merge(moves_sut, on="sourceUseTypeID"
-                                  ).merge(moves_ft, on="fuelTypeID")
+    def detailedcsvgen(self, test_w_mvs3=True):
+        self.act_df = self._actprc(test_w_mvs3=test_w_mvs3)
+        emis = self._emisprc(test_w_mvs3=test_w_mvs3)
+        if test_w_mvs3:
+            self.act_df = self.act_df.assign(
+                dayType=self.dayType_selected * len(self.act_df),
+                season=self.season_selected * len(self.act_df),
+                year=self.year_selected * len(self.act_df),
+            )
+            emis = emis.assign(
+                dayType=self.dayType_selected * len(emis),
+                season=self.season_selected * len(emis),
+                year=self.year_selected * len(emis),
+            )
+        self.emis_df = self.outpollutant.merge(
+            emis, on="pollutantID", how="left"
+        ).merge(self.labels["pollutants"], on="pollutantID")
+        act_out = self.act_add_labs(self.act_df)
+        emis_out = self.emis_add_labs(self.emis_df)
+        # ToDo: Add test function:
+        set(self.settings["csvxml_ei"]).symmetric_difference(set(self.emis_df.columns))
+        set(self.settings["csvxml_act"]).symmetric_difference(set(self.act_df.columns))
 
-        # self._actemisconnector(act, emis)
+        return {"act": act_out, "emis": emis_out}
 
     def aggsccneigen(self):
+
         ...
 
     def aggxlsxgen(self):

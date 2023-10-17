@@ -1,17 +1,3 @@
-"""
-
-
-"""
-
-# 1. Logging function
-
-# 2. Timing function
-
-# 3. Get MOVES table
-
-# 4. QA Log
-
-
 """General utility functions."""
 from io import StringIO
 import cProfile
@@ -26,6 +12,7 @@ from pathlib import Path
 from sqlalchemy import create_engine
 import pkg_resources
 import yaml
+from pint import UnitRegistry
 
 package_name = "ttionroadei"
 try:
@@ -42,6 +29,7 @@ log_file = settings.get("log_file")
 log_filename = settings.get("log_filename")
 log_level = settings.get("log_level")
 mvs4defaultdb = settings.get("MOVES4_Default_DB")
+valid_units = settings.get("valid_units")
 
 
 def profile(
@@ -164,7 +152,7 @@ def _add_handler(logger, dir, filename=log_filename, log_level=log_level):
     return logger
 
 
-def get_moves_defaults(
+def get_labels(
     database_nm=mvs4defaultdb,
     user="moves",
     password="moves",
@@ -174,17 +162,24 @@ def get_moves_defaults(
     db_url = f"mysql+pymysql://{user}:{password}@{host}:{port}/{database_nm}"
     engine = create_engine(db_url)
     conn = engine.connect()
-
+    county = pd.read_sql(
+        "SELECT countyID FIPS, countyName county FROM county WHERE stateID = 48", conn
+    ).assign(
+        FIPS=lambda df: df.FIPS.astype(int),
+        county=lambda df: df.county.str.split(" County", expand=True)[0].str.strip(),
+    )
+    # Emission process labels
     emisprc = pd.read_sql(
         "SELECT processID, processName, shortName processABB  FROM emissionprocess WHERE "
         "isAffectedByOnroad = 1",
         conn,
     )
+    # Pollutant labels
     pollutants = pd.read_sql(
-        "SELECT pollutantID, pollutantName, shortName, NEIPollutantCode, energyOrMass "
-        "FROM pollutant WHERE isAffectedByOnroad = 1",
+        "SELECT pollutantID, shortName pollutant FROM pollutant WHERE isAffectedByOnroad = 1",
         conn,
     )
+    # Road type labels
     rdlab = pd.DataFrame(
         {
             "mvsRoadTypeID": [1, 2, 3, 4, 5],
@@ -196,63 +191,94 @@ def get_moves_defaults(
         "FROM roadtype WHERE isAffectedByOnroad = 1",
         conn,
     ).merge(rdlab, on="mvsRoadTypeID")
+    # Source use type and fuel type labels
     sut_lab = pd.read_csv(
         StringIO(
-            """sourceUseTypeID, sutLab
-        11, MC
-        21, PC
-        31, PT
-        32, LCT
-        41, OBus
-        42, TBus
-        43, SBus
-        51, RT
-        52, SuShT
-        53, SuLhT
-        54, MH
-        61, CShT
-        62, CLhT
+            """sourceUseTypeID,sutLab
+        11,MC
+        21,PC
+        31,PT
+        32,LCT
+        41,OBus
+        42,TBus
+        43,SBus
+        51,RT
+        52,SuShT
+        53,SuLhT
+        54,MH
+        61,CShT
+        62,CLhT
     """
         )
     )
     ft_lab = pd.read_csv(
         StringIO(
-            """fuelTypeID, ftLab
-        1, G
-        2, D
-        3, CNG
-        4, LPG
-        5, E85
-        9, ELEC
+            """fuelTypeID,ftLab
+        1,G
+        2,D
+        3,CNG
+        4,LPG
+        5,E85
+        9,ELEC
     """
         )
     )
-
     moves_sut = pd.read_sql(
-        "SELECT sourceTypeID sourceUseTypeID, sourceTypeName FROM sourceusetype",
+        "SELECT sourceTypeID sourceUseTypeID , sourceTypeName sourceUseType FROM sourceusetype",
         conn,
     ).merge(sut_lab, on="sourceUseTypeID")
     moves_ft = pd.read_sql(
-        "SELECT fuelTypeID, fuelTypeDesc FROM fueltype",
+        "SELECT fuelTypeID, fuelTypeDesc fuelType FROM fueltype",
         conn,
     ).merge(ft_lab, on="fuelTypeID")
     conn.close()
+    # Activity labels
+    act_lab = pd.DataFrame(
+        {
+            "actTypeABB": [
+                "VMT",
+                "VHT",
+                "Speed",
+                "AdjSHP",
+                "ONI",
+                "Starts",
+                "SHEI",
+                "APU",
+            ],
+            "actType": [
+                "VMT",
+                "VHT",
+                "Speed",
+                "Adjusted SHP",
+                "ONI",
+                "Starts",
+                "Extended Idle Hours",
+                "APU Hours",
+            ],
+        }
+    )
     return {
+        "county": county,
         "emisprc": emisprc,
         "pollutants": pollutants,
         "moves_roadtypes": moves_roadtypes,
         "moves_sut": moves_sut,
         "moves_ft": moves_ft,
+        "act_lab": act_lab,
     }
 
 
-def create_mvs_rdtype_lab():
-    pd.DataFrame(
-        {
-            "mvsRoadTypeID": [1, 2, 3, 4, 5],
-            "mvsRoadLab": ["offNet", "rurRes", "rurUnRes", "urbRes", "urbUnRes"],
-        }
-    )
+def unit_converter(in_unit, out_unit):
+    ureg = UnitRegistry()
+    ureg.define("MBTU = 1e6 BTU")
+    # Define the source and target units
+    source_unit = ureg(in_unit)
+    target_unit = ureg(out_unit)
+    # Convert to base units and calculate the conversion factor
+    conversion_factor = (
+        source_unit.to_base_units() / target_unit.to_base_units()
+    ).magnitude
+    return conversion_factor
 
 
 @profile()
@@ -263,7 +289,7 @@ def profile_test():
 
 if __name__ == "__main__":
     ts("date")
-    get_moves_defaults(port=3308)
-    get_moves_defaults()
+    get_labels(port=3308)
+    get_labels()
     profile_test()
     z = 1

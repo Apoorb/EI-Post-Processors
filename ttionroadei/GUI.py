@@ -11,7 +11,7 @@ import logging as lg
 import pkg_resources
 import yaml
 
-from ttionroadei.utils import _add_handler, settings, get_moves_defaults
+from ttionroadei.utils import _add_handler, settings, get_labels, valid_units
 from ttionroadei.csvxmlpostprc.csvxmlgen import CsvXmlGen
 
 
@@ -21,7 +21,10 @@ class PostProcessorGUI:
         # TODO: Change to MOVES 4 utilities structure. I am using old utilities. I am
         #  hard coding. Handle this through a config file or setting.py. Ideally
         #  concatenate the paths based on the `ei_base_dir` path.
-        self.mvs4default_tables = dict()
+        self.pollutant_map_codes_nei_selected = dict()
+        self.pollutant_codes_nei_dropdown = list()
+        self.pollutant_codes_nei_selected = list()
+        self.labels = dict()
         self.ei_base_dir = ""
         self.out_dir = ""
         self.out_dir_pp = ""
@@ -189,6 +192,7 @@ class PostProcessorGUI:
             "fr",
         ]
         self.pollutant_codes_dropdown = ["CO", "NOx", "PM10"]
+        self.pollutant_codes_nei_dropdown = ["CO", "NOx", "PM10"]
         # ToDo: Need a mapping file for pollutant codes to pollutants
         # FixMe: How are me going to get this inputs?
         #   - NEI pollutants?
@@ -229,6 +233,13 @@ class PostProcessorGUI:
             for k, v in self.pollutant_map.items()
             if k in self.pollutant_codes_selected
         }
+        # ToDo NEI pollutants need to be a subset of `self.pollutant_codes_selected`
+        self.pollutant_codes_nei_selected = ["CO", "NOx"]
+        self.pollutant_map_codes_nei_selected = {
+            k: v
+            for k, v in self.pollutant_map.items()
+            if k in self.pollutant_codes_nei_selected
+        }
         # 6. Based on the area chosen, run code in the backend to get the road-type
         # mapping.
         # TODO: Ask the user the road type info needed (MOVES or TDM or HPMS?). Use
@@ -238,7 +249,7 @@ class PostProcessorGUI:
         #  following columns:
         #  areaTypeId, areaType, roadTypeId, roadType, mvSroadTypeId, mvSroadType
         self._get_roadtype()
-        self.mvs4default_tables = get_moves_defaults(
+        self.labels = get_labels(
             database_nm=settings.get("MOVES4_Default_DB"),
             user="moves",
             password="moves",
@@ -309,6 +320,7 @@ class PostProcessorGUI:
             "season_selected": self.season_selected,
             "daytype_selected": self.daytype_selected,
             "pollutant_map_codes_selected": self.pollutant_map_codes_selected,
+            "pollutant_map_codes_nei_selected": self.pollutant_map_codes_nei_selected,
             "input_units": self.input_units,
             "output_units": self.output_units.copy(),
             "conversion_factor": self.conversion_factor,
@@ -345,9 +357,12 @@ class PostProcessorGUI:
         csvxmlgen = CsvXmlGen(self)
         csvxmlgen.paramqc()
         if self.gendetailedcsvfiles:
-            csvxmlgen.detailedcsvgen()
+            act_emis_dict = csvxmlgen.detailedcsvgen()
         if self.genaggpivfiles:
-            csvxmlgen.aggxlsxgen()
+            year = 1
+            scenario = 1
+            area = 1
+            csvxmlgen.aggxlsxgen(self.pollutant_map_codes_nei_selected)
         if self.genxmlfile:
             csvxmlgen.aggsccneigen()
 

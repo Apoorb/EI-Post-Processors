@@ -107,9 +107,6 @@ xlsxxml_aggpiv_opts:
   aggByHrRd: [sourceUseTypeID, fuelTypeID] # Keep base scenario details, hour, and road type categories. Remove details of source use and fuel type
   aggByHr: [sourceUseTypeID, fuelTypeID, areaTypeID, funcClassID] # Keep base scenario details and hour categories. Remove details of source use, fuel, and road type
   aggByBaseScenario: [hour, sourceUseTypeID, fuelTypeID, areaTypeID, funcClassID] # Keep base scenario details. Remove details of hour, source use, fuel, and road type
-# Aggregation for NEI SCC output
-aggBySccNEI: {agg_by: [hour, areaTypeID, funcClassID], keep:sccNEI} # Aggregate to NEI SCCs. Use for XMls.
-
 
 # Aggregation rows added in MOVES3 Utilities
 aggRows:

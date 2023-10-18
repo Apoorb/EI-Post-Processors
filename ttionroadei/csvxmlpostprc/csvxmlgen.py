@@ -40,8 +40,6 @@ class CsvXmlGen:
             + "0080"
         )
         self.sutFtfun = lambda df: df.sutLab + "_" + df.ftLab
-        self.act_df = pd.DataFrame()
-        self.emis_df = pd.DataFrame()
 
     def paramqc(self):
         a = 1
@@ -49,7 +47,11 @@ class CsvXmlGen:
 
     def _emisprc(self, dev_w_mvs3):
         emis_filter_rename_dict = self.settings["emis_rename"]
-        emis_id_cols = self.settings["csvxml_ei"]["idx"]
+        emis_id_cols = set(self.settings["csvxml_ei"]["idx"]) - set(
+            [
+                "pollutantCode",
+            ]
+        )
         # FixMe: Update after MOVES 4 main utilities are ready.
         if dev_w_mvs3:
             emis_id_cols = [
@@ -86,16 +88,16 @@ class CsvXmlGen:
                 )
                 ls_df.append(df2)
         _emis_tmp = pd.concat(ls_df)
-
+        _emis_tmp1 = self.outpollutant.merge(_emis_tmp, on="pollutantID", how="left")
         try:
-            if set(_emis_tmp.emissionunits.unique()) != set(
+            if set(_emis_tmp1.emissionunits.unique()) != set(
                 self.conversion_factor.input_units.values
             ):
                 raise ValueError(
                     "The input units selected through the GUI do not match units in the utilities output."
                 )
             _emis = (
-                _emis_tmp.rename(columns={"emissionunits": "input_units"})
+                _emis_tmp1.rename(columns={"emissionunits": "input_units"})
                 .merge(self.conversion_factor, on="input_units")
                 .assign(emission=lambda df: df.emission * df.confactor)
                 .drop(columns=["input_units", "confactor"])
@@ -104,9 +106,6 @@ class CsvXmlGen:
         except ValueError as verr:
             self.logger.error(msg=f"{verr}")
             raise
-        filter_pollutants = self.outpollutant.pollutantID.values
-        _emis = _emis.loc[lambda df: df.pollutantID.isin(filter_pollutants)]
-
         return _emis
 
     def _actprc(self, dev_w_mvs3):
@@ -154,20 +153,28 @@ class CsvXmlGen:
         return _act
 
     def _actqc(self):
+        # ToDo: Add test function:
+        set(self.settings["csvxml_act"]).symmetric_difference(set(self.act_df.columns))
         ...
 
     def _emisqc(self):
+        # ToDo: Add test function:
+        set(self.settings["csvxml_ei"]).symmetric_difference(set(self.emis_df.columns))
         ...
 
     def _outputsqc(self):
+        # ToDo: Add test function:
+        set(self.settings["csvxml_act"]).symmetric_difference(set(self.act_df.columns))
+        set(self.settings["csvxml_ei"]).symmetric_difference(set(self.emis_df.columns))
+
         ...
 
-    def act_add_labs(self, df):
+    def act_add_labs(self, df_):
         columns = [
             item for sublist in self.settings["csvxml_act"].values() for item in sublist
         ]
         return (
-            df.merge(self.area_rdtype_df, on=["funcClassID", "areaTypeID"], how="left")
+            df_.merge(self.area_rdtype_df, on=["funcClassID", "areaTypeID"], how="left")
             .merge(self.labels["moves_roadtypes"], on="mvsRoadTypeID")
             .merge(self.labels["moves_sut"], on="sourceUseTypeID")
             .merge(self.labels["moves_ft"], on="fuelTypeID")
@@ -180,12 +187,12 @@ class CsvXmlGen:
             .filter(items=columns)
         )
 
-    def emis_add_labs(self, df):
+    def emis_add_labs(self, df_):
         columns = [
             item for sublist in self.settings["csvxml_ei"].values() for item in sublist
         ]
         return (
-            df.merge(
+            df_.merge(
                 self.labels["emisprc"].drop(columns="processName"),
                 on="processID",
                 how="left",
@@ -195,6 +202,7 @@ class CsvXmlGen:
             .merge(self.labels["moves_sut"], on="sourceUseTypeID")
             .merge(self.labels["moves_ft"], on="fuelTypeID")
             .merge(self.labels["county"], on="FIPS")
+            .merge(self.labels["pollutants"], on="pollutantID")
             .assign(
                 sccNEI=lambda df: self.sccfun(df),
                 sutFtLabel=lambda df: self.sutFtfun(df),
@@ -203,33 +211,58 @@ class CsvXmlGen:
         )
 
     def detailedcsvgen(self, dev_w_mvs3=True):
-        self.act_df = self._actprc(dev_w_mvs3=dev_w_mvs3)
-        emis = self._emisprc(dev_w_mvs3=dev_w_mvs3)
+        act_df = self._actprc(dev_w_mvs3=dev_w_mvs3)
+        emis_df = self._emisprc(dev_w_mvs3=dev_w_mvs3)
         if dev_w_mvs3:
-            self.act_df = self.act_df.assign(
-                dayType=self.dayType_selected * len(self.act_df),
-                season=self.season_selected * len(self.act_df),
-                year=self.year_selected * len(self.act_df),
+            act_df = act_df.assign(
+                dayType=self.dayType_selected * len(act_df),
+                season=self.season_selected * len(act_df),
+                year=self.year_selected * len(act_df),
             )
-            emis = emis.assign(
-                dayType=self.dayType_selected * len(emis),
-                season=self.season_selected * len(emis),
-                year=self.year_selected * len(emis),
+            emis_df = emis_df.assign(
+                dayType=self.dayType_selected * len(emis_df),
+                season=self.season_selected * len(emis_df),
+                year=self.year_selected * len(emis_df),
             )
-        self.emis_df = self.outpollutant.merge(
-            emis, on="pollutantID", how="left"
-        ).merge(self.labels["pollutants"], on="pollutantID")
-        act_out = self.act_add_labs(self.act_df)
-        emis_out = self.emis_add_labs(self.emis_df)
-        # ToDo: Add test function:
-        set(self.settings["csvxml_ei"]).symmetric_difference(set(self.emis_df.columns))
-        set(self.settings["csvxml_act"]).symmetric_difference(set(self.act_df.columns))
-
+        act_out = self.act_add_labs(act_df)
+        emis_out = self.emis_add_labs(emis_df)
         return {"act": act_out, "emis": emis_out}
 
-    def aggsccneigen(self):
-
+    def aggxlsxgen(self, act_emis_dict):
+        a = 1
         ...
 
-    def aggxlsxgen(self):
-        ...
+    def aggsccgen(self, act_emis_dict, nei_pols, year, season, daytype):
+        # ToDo: Move to xmlgen module
+        scc_emis_df = (
+            act_emis_dict["emis"]
+            .loc[
+                lambda df: (df.year == year)
+                & (df.season == season)
+                & (df.dayType == daytype)
+                & (df.pollutantCode.isin(nei_pols))
+            ]
+            .assign(
+                sccNEI=lambda df: self.sccfun(df),
+            )
+        )
+        agg_emis_scc = scc_emis_df.groupby(
+            ["FIPS", "sccNEI", "pollutantCode", "emissionunits"], as_index=False
+        ).emission.sum()
+        scc_act_df = (
+            act_emis_dict["act"]
+            .loc[lambda df: df.actTypeABB == "VMT"]
+            .loc[
+                lambda df: (df.year == year)
+                & (df.season == season)
+                & (df.dayType == daytype)
+            ]
+            .assign(
+                sccNEI=lambda df: self.sccfun(df), E6MILE=lambda df: df.activity / 1e6
+            )
+        )
+        agg_act_scc = scc_act_df.groupby(
+            ["FIPS", "sccNEI"], as_index=False
+        ).E6MILE.sum()
+        df_nei_scc = agg_emis_scc.merge(agg_act_scc, on=["FIPS", "sccNEI"], how="left")
+        return df_nei_scc

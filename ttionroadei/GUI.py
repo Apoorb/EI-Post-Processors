@@ -5,10 +5,8 @@ This needs to be revised based on how the GUI gets redesigned.
 
 """
 from pathlib import Path
-import yaml
 import pandas as pd
 import logging as lg
-import pkg_resources
 import yaml
 
 from ttionroadei.utils import _add_handler, settings, get_labels, unit_converter
@@ -21,13 +19,12 @@ class PostProcessorGUI:
         # TODO: Change to MOVES 4 utilities structure. I am using old utilities. I am
         #  hard coding. Handle this through a config file or setting.py. Ideally
         #  concatenate the paths based on the `ei_base_dir` path.
-        self.pollutant_map_codes_nei_selected = dict()
+        self.pollutant_codes_nei_selected = dict()
         self.pollutant_codes_nei_dropdown = list()
-        self.pollutant_codes_nei_selected = list()
         self.labels = dict()
         self.ei_base_dir = ""
         self.out_dir = ""
-        self.out_dir_pp = ""
+        self.out_dir_pp = Path()
         self.ei_fis_EMS = dict()
         self.ei_fis_RF = dict()
         self.ei_fis_TEC = dict()
@@ -92,8 +89,10 @@ class PostProcessorGUI:
 
     def set_paths(self):
         self.ei_dir = Path(
-            r"E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_"
-            r"\_Tasks\Task 3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output"
+            r"E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - "
+            r"FY2022_HGB2026_"
+            r"\_Tasks\Task 3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr"
+            r"\Outputs\Emission_output"
         )
         self.ei_fis_EMS = {
             "OnRoad": self.ei_dir.joinpath("emission_output_VMT.txt"),
@@ -206,7 +205,8 @@ class PostProcessorGUI:
         }
         # ToDo: Choose from the following options
         settings["valid_units"]
-        # TODO: Read the units of emission module output. This is constant. Depends on the MOVES output settings.
+        # TODO: Read the units of emission module output. This is constant. Depends
+        #  on the MOVES output settings.
         self.input_units = {
             "mass": "grams",
             "energy": "Kilojoules",
@@ -255,11 +255,6 @@ class PostProcessorGUI:
         }
         # ToDo NEI pollutants need to be a subset of `self.pollutant_codes_selected`
         self.pollutant_codes_nei_selected = ["CO", "NOx"]
-        self.pollutant_map_codes_nei_selected = {
-            k: v
-            for k, v in self.pollutant_map.items()
-            if k in self.pollutant_codes_nei_selected
-        }
         # 6. Based on the area chosen, run code in the backend to get the road-type
         # mapping.
         # TODO: Ask the user the road type info needed (MOVES or TDM or HPMS?). Use
@@ -340,7 +335,7 @@ class PostProcessorGUI:
             "season_selected": self.season_selected,
             "daytype_selected": self.daytype_selected,
             "pollutant_map_codes_selected": self.pollutant_map_codes_selected,
-            "pollutant_map_codes_nei_selected": self.pollutant_map_codes_nei_selected,
+            "pollutant_codes_nei_selected": self.pollutant_codes_nei_selected,
             "input_units": self.input_units,
             "output_units": self.output_units.copy(),
             "conversion_factor": self.conversion_factor,
@@ -378,13 +373,59 @@ class PostProcessorGUI:
         csvxmlgen.paramqc()
         if self.gendetailedcsvfiles:
             act_emis_dict = csvxmlgen.detailedcsvgen()
+            act_emis_dict["act"].to_csv(
+                self.out_dir_pp.joinpath("activityDetailed.csv"), index=False
+            )
+            act_emis_dict["emis"].to_csv(
+                self.out_dir_pp.joinpath("emissionDetailed.csv"), index=False
+            )
+        else:
+            try:
+                act_emis_dict = {
+                    "act": pd.read_csv(
+                        self.out_dir_pp.joinpath("activityDetailed.csv")
+                    ),
+                    "emis": pd.read_csv(
+                        self.out_dir_pp.joinpath("emissionDetailed.csv")
+                    ),
+                }
+            except:
+                self.logger("Generate detailed csv files to prepare aggregate files!")
+                raise
+
         if self.genaggpivfiles:
-            year = 1
-            scenario = 1
-            area = 1
-            csvxmlgen.aggxlsxgen(self.pollutant_map_codes_nei_selected)
+            # ToDo need user input for choosing year, season (annual,
+            # csvxmlgen.aggsccneigen(
+            #     self.pollutant_map_codes_nei_selected,
+            #     year=2026,
+            #     season="annual",
+            #     daytype="None")
+            # csvxmlgen.aggsccneigen(
+            #     self.pollutant_map_codes_nei_selected,
+            #     year=2026,
+            #     season="s",
+            #     daytype="wkd")
+
+            csvxmlgen.aggxlsxgen(act_emis_dict)
+
         if self.genxmlfile:
-            csvxmlgen.aggsccneigen()
+            nei_pols = self.pollutant_codes_nei_selected
+            year = 2026
+            season = "p1"
+            daytype = "fr"
+            scenario = str(year) + season + daytype
+            xmlscc_df = csvxmlgen.aggsccgen(
+                act_emis_dict=act_emis_dict,
+                nei_pols=nei_pols,
+                year=year,
+                season=season,
+                daytype=daytype,
+            )
+            xmlscc_df.to_csv(
+                self.out_dir_pp.joinpath(f"{scenario}_XmlSCCStagingTable.csv"),
+                index=False,
+            )
+            # xmlgen.xmlgen()
 
 
 if __name__ == "__main__":

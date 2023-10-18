@@ -47,29 +47,11 @@ class CsvXmlGen:
         a = 1
         ...
 
-    def _emisprc(self, test_w_mvs3):
-        # ToDo: MOVE to settings.YAML
+    def _emisprc(self, dev_w_mvs3):
         emis_filter_rename_dict = self.settings["emis_rename"]
-        # ToDo: MOVE to settings.YAML
-        emis_id_cols = [
-            "EIType",
-            "area",
-            "FIPS",
-            "year",
-            "season",
-            "dayType",
-            "hour",
-            "funcClassID",
-            "areaTypeID",
-            "sourceUseTypeID",
-            "fuelTypeID",
-            "pollutantID",
-            "processID",
-            "emissionunits",
-        ]
-
+        emis_id_cols = self.settings["csvxml_ei"]["idx"]
         # FixMe: Update after MOVES 4 main utilities are ready.
-        if test_w_mvs3:
+        if dev_w_mvs3:
             emis_id_cols = [
                 i
                 for i in emis_id_cols
@@ -103,29 +85,37 @@ class CsvXmlGen:
                     id_vars=emis_id_cols, var_name="actTypeABB", value_name="emission"
                 )
                 ls_df.append(df2)
-        _emis = pd.concat(ls_df)
-        # ToDo Convert Units
-        _emis = self.conversion_factor
+        _emis_tmp = pd.concat(ls_df)
+
+        try:
+            if set(_emis_tmp.emissionunits.unique()) != set(
+                self.conversion_factor.input_units.values
+            ):
+                raise ValueError(
+                    "The input units selected through the GUI do not match units in the utilities output."
+                )
+            _emis = (
+                _emis_tmp.rename(columns={"emissionunits": "input_units"})
+                .merge(self.conversion_factor, on="input_units")
+                .assign(emission=lambda df: df.emission * df.confactor)
+                .drop(columns=["input_units", "confactor"])
+                .rename(columns={"output_units": "emissionunits"})
+            )
+        except ValueError as verr:
+            self.logger.error(msg=f"{verr}")
+            raise
+        filter_pollutants = self.outpollutant.pollutantID.values
+        _emis = _emis.loc[lambda df: df.pollutantID.isin(filter_pollutants)]
+
         return _emis
 
-    def _actprc(self, test_w_mvs3):
-        # ToDo: MOVE to settings.YAML
+    def _actprc(self, dev_w_mvs3):
         act_filter_rename_dict = self.settings["act_rename"]
-        # ToDo: MOVE to settings.YAML
-        act_id_cols = [
-            "area",
-            "FIPS",
-            "year",
-            "season",
-            "dayType",
-            "hour",
-            "funcClassID",
-            "areaTypeID",
-            "sourceUseTypeID",
-            "fuelTypeID",
-        ]
+        act_id_cols = set(self.settings["csvxml_act"]["idx"]) - set(
+            ["actTypeABB", "activityunits"]
+        )
         # FixMe: Update after MOVES 4 main utilities are ready.
-        if test_w_mvs3:
+        if dev_w_mvs3:
             act_id_cols = [
                 i for i in act_id_cols if i not in ("area", "dayType", "season", "year")
             ]
@@ -212,10 +202,10 @@ class CsvXmlGen:
             .filter(items=columns)
         )
 
-    def detailedcsvgen(self, test_w_mvs3=True):
-        self.act_df = self._actprc(test_w_mvs3=test_w_mvs3)
-        emis = self._emisprc(test_w_mvs3=test_w_mvs3)
-        if test_w_mvs3:
+    def detailedcsvgen(self, dev_w_mvs3=True):
+        self.act_df = self._actprc(dev_w_mvs3=dev_w_mvs3)
+        emis = self._emisprc(dev_w_mvs3=dev_w_mvs3)
+        if dev_w_mvs3:
             self.act_df = self.act_df.assign(
                 dayType=self.dayType_selected * len(self.act_df),
                 season=self.season_selected * len(self.act_df),

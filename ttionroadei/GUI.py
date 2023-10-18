@@ -212,7 +212,7 @@ class PostProcessorGUI:
             "energy": "Kilojoules",
         }  # Read from previous module!
         self.output_units = {
-            "mass": "short_ton",
+            "mass": "pound",
             "energy": "Kilojoules",
         }  # Fixme change this
         mass_confactor = unit_converter(

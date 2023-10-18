@@ -271,6 +271,7 @@ def get_labels(
 def unit_converter(in_unit, out_unit):
     ureg = UnitRegistry()
     ureg.define("MBTU = 1e6 BTU")
+    ureg.define("Kilojoules = kilojoule")
     # Define the source and target units
     source_unit = ureg(in_unit)
     target_unit = ureg(out_unit)

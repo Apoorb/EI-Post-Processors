@@ -11,7 +11,7 @@ import logging as lg
 import pkg_resources
 import yaml
 
-from ttionroadei.utils import _add_handler, settings, get_labels, valid_units
+from ttionroadei.utils import _add_handler, settings, get_labels, unit_converter
 from ttionroadei.csvxmlpostprc.csvxmlgen import CsvXmlGen
 
 
@@ -63,9 +63,9 @@ class PostProcessorGUI:
         self.use_hpms_area_rdtype = False
         self.tdm_hpms_rdtype = pd.DataFrame()
         self.tdm_hpms_rdtype_flt = pd.DataFrame()
-        self.conversion_factor = dict()
         self.input_units = dict()
         self.output_units = dict()
+        self.conversion_factor = pd.DataFrame()
 
         # TODO: Ask the user for XML header details.
         self.gendetailedcsvfiles = True
@@ -204,14 +204,34 @@ class PostProcessorGUI:
             "PM10": [100, 106, 107],
             "TEC": [91],  # Should always be selected for TEC EIs
         }
-        # TODO: Give user default option for output units.
-        #  Read the units of emission module output.
+        # ToDo: Choose from the following options
+        settings["valid_units"]
+        # TODO: Read the units of emission module output. This is constant. Depends on the MOVES output settings.
         self.input_units = {
-            "mass": "Grams",
-            "energy": "J",
+            "mass": "grams",
+            "energy": "Kilojoules",
         }  # Read from previous module!
-        self.output_units = self.input_units  # Fixme change this
-        self.conversion_factor = {"mass": 1, "energy": 1}
+        self.output_units = {
+            "mass": "short_ton",
+            "energy": "Kilojoules",
+        }  # Fixme change this
+        mass_confactor = unit_converter(
+            in_unit=self.input_units["mass"], out_unit=self.output_units["mass"]
+        )
+        energy_confactor = unit_converter(
+            in_unit=self.input_units["energy"], out_unit=self.output_units["energy"]
+        )
+
+        self.conversion_factor = pd.DataFrame(
+            {
+                "input_units": [self.input_units["mass"], self.input_units["energy"]],
+                "output_units": [
+                    self.output_units["mass"],
+                    self.output_units["energy"],
+                ],
+                "confactor": [mass_confactor, energy_confactor],
+            }
+        )
         # TODO: Use MOVES units combinations
 
     def set_param(self):

@@ -1,9 +1,11 @@
 # Global settings that can be configured by the user.
 ---
+# Logging Variables
 log_console: true
 log_file: true
 log_filename: csvxmlpostprc
 log_level: 20 # INFO
+# Definition of inventory type (EIType). Only applicable to emissions. Activity is the same.
 INV_TYPES:
   EMS:
     processID: [1, 2, 9, 10, 11, 12, 13, 15, 16, 17, 90, 91, 93]
@@ -11,11 +13,12 @@ INV_TYPES:
     processID: [18, 19]
   TEC:
     pollutantID: [91]
+# Valid units for `pint` library used for unit conversion.
 valid_units:
     mass: [kg, gram, pound, short_ton]
     energy: [joule, kilojoule, MBTU]
-    distance: [mile, km],
-}
+    distance: [mile]
+# MOVES 4 database used to default tables. util.py directly has the table names hard coded.
 MOVES4_Default_DB: movesdb20230615
 MOVES4_Default_TAB:
   activitytype: Activity type IDs and description
@@ -23,10 +26,39 @@ MOVES4_Default_TAB:
   fueltype: Fuel type
   pollutant: Pollutant IDs, abbreviation, and fullname
   roadtype: MOVES road types
-  scc: EPA NEI's SCC code and its decomposition
   sourceusetype: Source use type IDs and fullname
+# Definition of EPA NEI SCC. Different from what MOVES uses
 sccNei: [22, fuelTypeID, sourceUseTypeID, 00, 80]
-activities:
+# Columns in the detailed activity data
+csvxml_act:
+  idx:
+    - area
+    - FIPS
+    - year
+    - season
+    - dayType
+    - hour
+    - areaTypeID
+    - funcClassID
+    - sourceUseTypeID
+    - fuelTypeID
+    - actTypeABB
+    - activityunits
+  labels:
+    - sccNEI
+    - areaType
+    - funcClass
+    - mvsRoadTypeID
+    - mvsRoadType
+    - onOffNetworkInd
+    - sourceUseType
+    - fuelType
+    - sutFtLabel
+    - actType
+  values:
+    - activity
+# Units for the activities
+activityunits:
   VMT: miles
   VHT: hours
   Speed: mph
@@ -36,68 +68,103 @@ activities:
   ONI: hours
   SHEI: hours
   APU: hours
-csvxml_act:
-  - area
-  - county
-  - FIPS
-  - year
-  - season
-  - dayType
-  - hour
-  - sccNEI
-  - areaTypeID
-  - areaType
-  - funcClassID
-  - funcClass
-  - mvsRoadTypeID
-  - mvsRoadType
-  - sourceUseTypeID
-  - sourceUseType
-  - fuelTypeID
-  - fuelType
-  - sutFtLabel
-  - actTypeABB
-  - actType
-  - activity
-  - activityunits
+# Columns in the detailed emission data
 csvxml_ei:
-  - EIType
-  - area
-  - county
-  - FIPS
-  - year
-  - season
-  - dayType
-  - hour
-  - sccNEI
-  - areaTypeID
-  - areaType
-  - funcClassID
-  - funcClass
-  - mvsRoadTypeID
-  - mvsRoadType
-  - sourceUseTypeID
-  - sourceUseType
-  - fuelTypeID
-  - fuelType
-  - sutFtLabel
-  - pollutantCode # Custom pollutants with multiple MOVES pollutantID such as PM10
-  - pollutantID
-  - pollutant
-  - processID
-  - processABB
+  idx:
+    - EIType
+    - area
+    - FIPS
+    - year
+    - season
+    - dayType
+    - hour
+    - areaTypeID
+    - funcClassID
+    - sourceUseTypeID
+    - fuelTypeID
+    - pollutantCode
+    - pollutantID
+    - processID
+    - emissionunits
+  labels:
+    - sccNEI
+    - areaType
+    - funcClass
+    - mvsRoadTypeID
+    - mvsRoadType
+    - sourceUseType
+    - fuelType
+    - sutFtLabel
+    - pollutant
+    - processABB
+  values:
   - emission
-  - emissionunits
 
+# Aggregate and pivot tables
+xlsxxml_aggpiv_opts:
+  aggByRdSutFt: [hour] # Keep base scenario details, road, source use, and fuel type categories. Remove details of hour
+  aggByHrSutFt: [areaTypeID, funcClassID] # Keep base scenario details (Year, County, Season, DayType), hour, source use and fuel type categories. Remove details of road type.
+  aggByHrRd: [sourceUseTypeID, fuelTypeID] # Keep base scenario details, hour, and road type categories. Remove details of source use and fuel type
+  aggByHr: [sourceUseTypeID, fuelTypeID, areaTypeID, funcClassID] # Keep base scenario details and hour categories. Remove details of source use, fuel, and road type
+  aggByBaseScenario: [hour, sourceUseTypeID, fuelTypeID, areaTypeID, funcClassID] # Keep base scenario details. Remove details of hour, source use, fuel, and road type
+# Aggregation for NEI SCC output
+aggBySccNEI: {agg_by: [hour, areaTypeID, funcClassID], keep:sccNEI} # Aggregate to NEI SCCs. Use for XMls.
+
+
+# Aggregation rows added in MOVES3 Utilities
 aggRows:
-  noHour: Show daily values
-  noProcess: Show emissions for pollutants (without process breakdown)
-  noAreaRoadType: Show the total on-network, total off-network, and total
-csvxml_aggpiv_opts:
-  aggByRdSutFt: Keep base scenario details, road, source use, and fuel type categories. Remove details of hour
-  aggByHrSutFt: Keep base scenario details (Year, County, Season, DayType), hour, source use and fuel type categories. Remove details of road type.
-  aggByHrRd: Keep base scenario details, hour, and road type categories. Remove details of source use and fuel type
-  aggByHr: Keep base scenario details and hour categories. Remove details of source use, fuel, and road type
-  aggByBaseScenario: Keep base scenario details. Remove details of hour, source use, fuel, and road type
-  aggBySccNEI: Aggregate to NEI SCCs. Use for XMls.
-
+  noHour: {hour:24-hour} # Show daily values
+  noProcess: {processID: ALL} # Show emissions for pollutants (without process breakdown)
+  noAreaRoadType: {areaTypeID: ALL, funcClassID: ALL} # Show the total on-network, total off-network, and total
+act_rename: {
+  area: area,
+  dayType: dayType,
+  season: season,
+  year: year,
+  County: FIPS,
+  Hour: hour,
+  Roadtype: funcClassID,
+  Areatype: areaTypeID,
+  Soucetype: sourceUseTypeID,
+  SUT: sourceUseTypeID,
+  Fueltype: fuelTypeID,
+  Starts Calculated: Starts,
+  Adjust SHP Calculated: AdjSHP,
+  ONI Calculated: ONI,
+  SHEI Calculated: SHEI,
+  APU Calculated: APU,
+  VMT Calculated: VMT,
+  VHT Calculated: VHT,
+  Speed: Speed,
+}
+emis_rename: {
+  area: area,
+  dayType: dayType,
+  season: season,
+  year: year,
+  EIType: EIType,
+  County: FIPS,
+  Hour: hour,
+  hour: hour,
+  Roadtype: funcClassID,
+  Areatype: areaTypeID,
+  Soucetype: sourceUseTypeID,
+  SUT: sourceUseTypeID,
+  Fueltype: fuelTypeID,
+  Pollutant: pollutantID,
+  Process: processID,
+  Emission: emission,
+  Unit: emissionunits,
+  VMT_Emission: VMT,
+  VMT_RF_Emission: VMT,
+  VMT_TEC_Emission: VMT,
+  Adjusted SHP Emission: AdjSHP,
+  ONI Emission: ONI,
+  ONI RF Emission: ONI,
+  ONI TEC Emission: ONI,
+  RF Emission: emission,
+  Start Emission: Starts,
+  Start RF Emission: Starts,
+  Start TEC Emission: Starts,
+  TEC Emission: emission,
+}

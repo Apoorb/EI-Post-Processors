@@ -1,6 +1,5 @@
 """
-
-
+Generate detailed and summarized csv files
 """
 from pathlib import Path
 import yaml
@@ -48,9 +47,7 @@ class CsvXmlGen:
     def _emisprc(self, dev_w_mvs3):
         emis_filter_rename_dict = self.settings["emis_rename"]
         emis_id_cols = set(self.settings["csvxml_ei"]["idx"]) - set(
-            [
-                "pollutantCode",
-            ]
+            ["pollutantCode", "actTypeABB"]
         )
         # FixMe: Update after MOVES 4 main utilities are ready.
         if dev_w_mvs3:
@@ -211,58 +208,152 @@ class CsvXmlGen:
         )
 
     def detailedcsvgen(self, dev_w_mvs3=True):
+        self.logger.info(msg="ETL activity data from the main modules...")
         act_df = self._actprc(dev_w_mvs3=dev_w_mvs3)
-        emis_df = self._emisprc(dev_w_mvs3=dev_w_mvs3)
         if dev_w_mvs3:
             act_df = act_df.assign(
                 dayType=self.dayType_selected * len(act_df),
                 season=self.season_selected * len(act_df),
                 year=self.year_selected * len(act_df),
             )
+        act_out = self.act_add_labs(act_df)
+        self.logger.info(msg="Processed activity data.")
+        self.logger.info(msg="ETL emission data from the main modules...")
+        emis_df = self._emisprc(dev_w_mvs3=dev_w_mvs3)
+        if dev_w_mvs3:
             emis_df = emis_df.assign(
                 dayType=self.dayType_selected * len(emis_df),
                 season=self.season_selected * len(emis_df),
                 year=self.year_selected * len(emis_df),
             )
-        act_out = self.act_add_labs(act_df)
         emis_out = self.emis_add_labs(emis_df)
+        self.logger.info(msg="Processed emission data.")
         return {"act": act_out, "emis": emis_out}
 
     def aggxlsxgen(self, act_emis_dict):
-        a = 1
-        ...
+        self.logger.info(msg="Aggregating detailed activity and emission data...")
+        emis_scenario_cols = [
+            "EIType",
+            "area",
+            "FIPS",
+            "year",
+            "season",
+            "dayType",
+        ]
+        act_scenario_cols = emis_scenario_cols.copy()
+        act_scenario_cols.pop(0)
+        keep_act = act_scenario_cols + [
+            "hour",
+            "sutFtLabel",
+            "mvsRoadLab",
+            "actTypeABB",
+            "activityunits",
+            "activity",
+        ]
+        keep_emis = emis_scenario_cols + [
+            "pollutantCode",
+            "hour",
+            "sutFtLabel",
+            "mvsRoadLab",
+            "actTypeABB",
+            "emissionunits",
+            "emission",
+        ]
+        order_act = act_scenario_cols + [
+            "hour",
+            "sourceUseTypeID",
+            "fuelTypeID",
+            "mvsRoadTypeID" "actTypeABB",
+            "activityunits",
+        ]
+        order_emis = emis_scenario_cols + [
+            "pollutantCode",
+            "hour",
+            "sourceUseTypeID",
+            "fuelTypeID",
+            "mvsRoadTypeID" "actTypeABB",
+            "emissionunits",
+            "mvsRoadLab",
+            "emission",
+        ]
+        act_idx = self.settings["csvxml_act"]["idx"]
+        emis_idx = self.settings["csvxml_ei"]["idx"]
+        aggdfs = {}
+        for aggtype, val in self.settings["xlsxxml_aggpiv_opts"].items():
+            remove = val["remove"]
+            add = val["add"]
+            act_idx1 = set(act_idx) - set(remove) | set(add)
+            emis_idx1 = set(emis_idx) - set(remove) | set(add)
+            agg_act = (
+                act_emis_dict["act"]
+                .loc[lambda df: df.actTypeABB != "Speed"]
+                .groupby(list(act_idx1), as_index=False)
+                .activity.sum()
+            )
+            act_sort_cols = [i for i in order_act if i in agg_act.columns]
+            agg_act = (
+                agg_act.sort_values(act_sort_cols)
+                .reset_index(drop=True)
+                .filter(items=keep_act)
+            )
+            agg_emis = (
+                act_emis_dict["emis"]
+                .groupby(list(emis_idx1), as_index=False)
+                .emission.sum()
+            )
+            emis_sort_cols = [i for i in order_emis if i in agg_emis.columns]
+            agg_emis = (
+                agg_emis.sort_values(emis_sort_cols)
+                .reset_index(drop=True)
+                .filter(items=keep_emis)
+            )
+            aggdfs[aggtype] = {
+                "act": agg_act,
+                "emis": agg_emis,
+            }
+        self.logger.info(msg="Aggregated detailed activity and emission data.")
+        return aggdfs
 
-    def aggsccgen(self, act_emis_dict, nei_pols, year, season, daytype):
-        # ToDo: Move to xmlgen module
+    def aggsccgen(self, act_emis_dict, nei_pols):
+        self.logger.info(
+            msg="Aggregating detailed activity and emission data to NEI SCCs."
+        )
         scc_emis_df = (
             act_emis_dict["emis"]
-            .loc[
-                lambda df: (df.year == year)
-                & (df.season == season)
-                & (df.dayType == daytype)
-                & (df.pollutantCode.isin(nei_pols))
-            ]
+            .loc[lambda df: (df.pollutantCode.isin(nei_pols))]
             .assign(
                 sccNEI=lambda df: self.sccfun(df),
             )
         )
         agg_emis_scc = scc_emis_df.groupby(
-            ["FIPS", "sccNEI", "pollutantCode", "emissionunits"], as_index=False
+            [
+                "area",
+                "year",
+                "season",
+                "dayType",
+                "FIPS",
+                "sccNEI",
+                "pollutantCode",
+                "emissionunits",
+            ],
+            as_index=False,
         ).emission.sum()
         scc_act_df = (
             act_emis_dict["act"]
             .loc[lambda df: df.actTypeABB == "VMT"]
-            .loc[
-                lambda df: (df.year == year)
-                & (df.season == season)
-                & (df.dayType == daytype)
-            ]
             .assign(
                 sccNEI=lambda df: self.sccfun(df), E6MILE=lambda df: df.activity / 1e6
             )
         )
         agg_act_scc = scc_act_df.groupby(
-            ["FIPS", "sccNEI"], as_index=False
+            ["area", "year", "season", "dayType", "FIPS", "sccNEI"], as_index=False
         ).E6MILE.sum()
-        df_nei_scc = agg_emis_scc.merge(agg_act_scc, on=["FIPS", "sccNEI"], how="left")
+        df_nei_scc = agg_emis_scc.merge(
+            agg_act_scc,
+            on=["area", "year", "season", "dayType", "FIPS", "sccNEI"],
+            how="left",
+        )
+        self.logger.info(
+            msg="Aggregated detailed activity and emission data to NEI SCC."
+        )
         return df_nei_scc

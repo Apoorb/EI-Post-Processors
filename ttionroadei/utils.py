@@ -4,10 +4,9 @@ import cProfile
 import pstats
 from functools import wraps
 import pandas as pd
-import numpy as np
+import datetime
 import datetime as dt
 import logging as lg
-import sys
 from pathlib import Path
 from sqlalchemy import create_engine
 import pkg_resources
@@ -24,8 +23,6 @@ try:
 except Exception as e:
     print(f"Error: {e}")
 
-log_console = settings.get("log_console")
-log_file = settings.get("log_file")
 log_filename = settings.get("log_filename")
 log_level = settings.get("log_level")
 mvs4defaultdb = settings.get("MOVES4_Default_DB")
@@ -280,6 +277,28 @@ def unit_converter(in_unit, out_unit):
         source_unit.to_base_units() / target_unit.to_base_units()
     ).magnitude
     return conversion_factor
+
+
+def delete_old_log_files(log_directory, max_age_in_days):
+    # Get the current date and time.
+    current_datetime = datetime.datetime.now()
+
+    # Calculate the threshold date based on the maximum age.
+    threshold_date = current_datetime - datetime.timedelta(days=max_age_in_days)
+
+    # Iterate through the log files and delete files with old timestamps.
+    for log_file in Path(log_directory).iterdir():
+        # Check if the file is a regular file (not a directory).
+        if log_file.is_file():
+            file_timestamp = datetime.datetime.fromtimestamp(log_file.stat().st_mtime)
+
+            # Compare the file's timestamp with the threshold date.
+            if file_timestamp < threshold_date:
+                # If the file is older than the threshold date, delete it.
+                log_file.unlink()
+                print(f"Deleted old log file: {log_file.name}")
+
+    print("Log files with old timestamps have been deleted.")
 
 
 @profile()

@@ -1,9 +1,7 @@
 # Global settings that can be configured by the user.
 ---
 # Logging Variables
-log_console: true
-log_file: true
-log_filename: csvxmlpostprc
+log_filename: postprc
 log_level: 20 # INFO
 # Definition of inventory type (EIType). Only applicable to emissions. Activity is the same.
 INV_TYPES:
@@ -20,15 +18,6 @@ valid_units:
     distance: [mile]
 # MOVES 4 database used to default tables. util.py directly has the table names hard coded.
 MOVES4_Default_DB: movesdb20230615
-MOVES4_Default_TAB:
-  activitytype: Activity type IDs and description
-  emissionprocess: Emission process IDs, abbreviation, and fullname
-  fueltype: Fuel type
-  pollutant: Pollutant IDs, abbreviation, and fullname
-  roadtype: MOVES road types
-  sourceusetype: Source use type IDs and fullname
-# Definition of EPA NEI SCC. Different from what MOVES uses
-sccNei: [22, fuelTypeID, sourceUseTypeID, 00, 80]
 # Columns in the detailed activity data
 csvxml_act:
   idx:
@@ -50,7 +39,7 @@ csvxml_act:
     - funcClass
     - mvsRoadTypeID
     - mvsRoadType
-    - onOffNetworkInd
+    - mvsRoadLab
     - sourceUseType
     - fuelType
     - sutFtLabel
@@ -85,6 +74,7 @@ csvxml_ei:
     - pollutantCode
     - pollutantID
     - processID
+    - actTypeABB
     - emissionunits
   labels:
     - sccNEI
@@ -92,6 +82,7 @@ csvxml_ei:
     - funcClass
     - mvsRoadTypeID
     - mvsRoadType
+    - mvsRoadLab
     - sourceUseType
     - fuelType
     - sutFtLabel
@@ -100,19 +91,6 @@ csvxml_ei:
   values:
   - emission
 
-# Aggregate and pivot tables
-xlsxxml_aggpiv_opts:
-  aggByRdSutFt: [hour] # Keep base scenario details, road, source use, and fuel type categories. Remove details of hour
-  aggByHrSutFt: [areaTypeID, funcClassID] # Keep base scenario details (Year, County, Season, DayType), hour, source use and fuel type categories. Remove details of road type.
-  aggByHrRd: [sourceUseTypeID, fuelTypeID] # Keep base scenario details, hour, and road type categories. Remove details of source use and fuel type
-  aggByHr: [sourceUseTypeID, fuelTypeID, areaTypeID, funcClassID] # Keep base scenario details and hour categories. Remove details of source use, fuel, and road type
-  aggByBaseScenario: [hour, sourceUseTypeID, fuelTypeID, areaTypeID, funcClassID] # Keep base scenario details. Remove details of hour, source use, fuel, and road type
-
-# Aggregation rows added in MOVES3 Utilities
-aggRows:
-  noHour: {hour:24-hour} # Show daily values
-  noProcess: {processID: ALL} # Show emissions for pollutants (without process breakdown)
-  noAreaRoadType: {areaTypeID: ALL, funcClassID: ALL} # Show the total on-network, total off-network, and total
 act_rename: {
   area: area,
   dayType: dayType,
@@ -165,3 +143,16 @@ emis_rename: {
   Start TEC Emission: Starts,
   TEC Emission: emission,
 }
+# Aggregate and pivot tables
+xlsxxml_aggpiv_opts:
+  aggByRdSutFt: {remove: [hour, processID, areaTypeID, funcClassID, pollutantID], add: [mvsRoadTypeID, mvsRoadLab, sutFtLabel]} # Keep base scenario details, road, source use, and fuel type categories. Remove details of hour
+  aggByHrSutFt: {remove: [processID, areaTypeID, funcClassID, mvsRoadLab, pollutantID], add: [sutFtLabel]} # Keep base scenario details (Year, County, Season, DayType), hour, source use and fuel type categories. Remove details of road type.
+  aggByHrRd: {remove: [sourceUseTypeID, fuelTypeID, processID, areaTypeID, funcClassID, pollutantID], add: [mvsRoadTypeID, mvsRoadLab]} # Keep base scenario details, hour, and road type categories. Remove details of source use and fuel type
+  aggByHr: {remove: [sourceUseTypeID, fuelTypeID, processID, areaTypeID, funcClassID, mvsRoadLab, pollutantID], add: []}  # Keep base scenario details and hour categories. Remove details of source use, fuel, and road type
+  aggByBaseScenarioAct: {remove: [hour, sourceUseTypeID, fuelTypeID, processID, areaTypeID, funcClassID, mvsRoadLab, sutFtLabel, pollutantID], add: []} # Keep base scenario details. Remove details of hour, source use, fuel, and road type
+
+# Aggregation rows added in MOVES3 Utilities
+aggRows:
+  noHour: {hour:24-hour} # Show daily values
+  noProcess: {processID: ALL} # Show emissions for pollutants (without process breakdown)
+  noAreaRoadType: {areaTypeID: ALL, funcClassID: ALL} # Show the total on-network, total off-network, and total

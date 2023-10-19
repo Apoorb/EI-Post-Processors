@@ -9,7 +9,13 @@ import pandas as pd
 import logging as lg
 import yaml
 
-from ttionroadei.utils import _add_handler, settings, get_labels, unit_converter
+from ttionroadei.utils import (
+    _add_handler,
+    settings,
+    get_labels,
+    unit_converter,
+    delete_old_log_files,
+)
 from ttionroadei.csvxmlpostprc.csvxmlgen import CsvXmlGen
 
 
@@ -19,6 +25,7 @@ class PostProcessorGUI:
         # TODO: Change to MOVES 4 utilities structure. I am using old utilities. I am
         #  hard coding. Handle this through a config file or setting.py. Ideally
         #  concatenate the paths based on the `ei_base_dir` path.
+        delete_old_log_files(log_directory=log_dir, max_age_in_days=30)
         self.pollutant_codes_nei_selected = dict()
         self.pollutant_codes_nei_dropdown = list()
         self.labels = dict()
@@ -221,7 +228,6 @@ class PostProcessorGUI:
         energy_confactor = unit_converter(
             in_unit=self.input_units["energy"], out_unit=self.output_units["energy"]
         )
-
         self.conversion_factor = pd.DataFrame(
             {
                 "input_units": [self.input_units["mass"], self.input_units["energy"]],
@@ -232,7 +238,7 @@ class PostProcessorGUI:
                 "confactor": [mass_confactor, energy_confactor],
             }
         )
-        # TODO: Use MOVES units combinations
+        # TODO: Use MOVES/ CG's units names
 
     def set_param(self):
         self.ei_selected = ["EMS", "RF", "TEC"]
@@ -338,7 +344,7 @@ class PostProcessorGUI:
             "pollutant_codes_nei_selected": self.pollutant_codes_nei_selected,
             "input_units": self.input_units,
             "output_units": self.output_units.copy(),
-            "conversion_factor": self.conversion_factor,
+            "conversion_factor": self.conversion_factor.to_dict(),
             "fi_temp_tdm_hpms_rdtype": str(self.fi_temp_tdm_hpms_rdtype),
             "use_tdm_area_rdtype": self.use_tdm_area_rdtype,
             "gendetailedcsvfiles": self.gendetailedcsvfiles,
@@ -362,9 +368,6 @@ class PostProcessorGUI:
             )
         self.logger.info(msg=f"Variables saved to {str(self.output_yaml_file)}")
 
-    def get_param(self, param):
-        ...
-
     def check_params(self):
         ...
 
@@ -372,12 +375,16 @@ class PostProcessorGUI:
         csvxmlgen = CsvXmlGen(self)
         csvxmlgen.paramqc()
         if self.gendetailedcsvfiles:
-            act_emis_dict = csvxmlgen.detailedcsvgen()
-            act_emis_dict["act"].to_csv(
-                self.out_dir_pp.joinpath("activityDetailed.csv"), index=False
+            self.logger.info(
+                msg=f"Processing and combining main module data to develop detailed data..."
             )
-            act_emis_dict["emis"].to_csv(
-                self.out_dir_pp.joinpath("emissionDetailed.csv"), index=False
+            act_emis_dict = csvxmlgen.detailedcsvgen()
+            act_out_fi = self.out_dir_pp.joinpath("activityDetailed.csv")
+            emis_out_fi = self.out_dir_pp.joinpath("emissionDetailed.csv")
+            act_emis_dict["act"].to_csv(act_out_fi, index=False)
+            act_emis_dict["emis"].to_csv(emis_out_fi, index=False)
+            self.logger.info(
+                msg=f"Saved detailed activity and emission data to {str(act_out_fi)} and {str(emis_out_fi)}, respectively."
             )
         else:
             try:
@@ -390,41 +397,45 @@ class PostProcessorGUI:
                     ),
                 }
             except:
-                self.logger("Generate detailed csv files to prepare aggregate files!")
+                self.logger.error(
+                    "Generate detailed csv files to prepare aggregate files!"
+                )
                 raise
 
         if self.genaggpivfiles:
-            # ToDo need user input for choosing year, season (annual,
-            # csvxmlgen.aggsccneigen(
-            #     self.pollutant_map_codes_nei_selected,
-            #     year=2026,
-            #     season="annual",
-            #     daytype="None")
-            # csvxmlgen.aggsccneigen(
-            #     self.pollutant_map_codes_nei_selected,
-            #     year=2026,
-            #     season="s",
-            #     daytype="wkd")
-
-            csvxmlgen.aggxlsxgen(act_emis_dict)
-
-        if self.genxmlfile:
+            self.logger.info(
+                msg=f"Processing and combining detailed activity and emission data to develop XML staging table..."
+            )
             nei_pols = self.pollutant_codes_nei_selected
+            xmlscc_df = csvxmlgen.aggsccgen(
+                act_emis_dict=act_emis_dict,
+                nei_pols=nei_pols,
+            )
+            xmlscc_csv_out_fi = self.out_dir_pp.joinpath("xmlSCCStagingTable.csv")
+            xmlscc_df.to_csv(
+                self.out_dir_pp.joinpath("xmlSCCStagingTable.csv"),
+                index=False,
+            )
+            self.logger.info(
+                msg=f"Saved XML staging table to {str(xmlscc_csv_out_fi)}."
+            )
+
+            self.logger.info(
+                msg=f"Aggregating detailed activity to develop aggregate tables table..."
+            )
+            agg_act_emis_dict = csvxmlgen.aggxlsxgen(act_emis_dict)
+            agg_tab_out_fi = self.out_dir_pp.joinpath("aggregateTable.xlsx")
+            with pd.ExcelWriter(agg_tab_out_fi, engine="xlsxwriter") as writer:
+                for key, val in agg_act_emis_dict.items():
+                    val["emis"].to_excel(writer, sheet_name=f"{key}_emis", index=False)
+                    val["act"].to_excel(writer, sheet_name=f"{key}_act", index=False)
+            self.logger.info(msg=f"Saved aggregate tables to {str(agg_tab_out_fi)}.")
+        if self.genxmlfile:
+            # ToDo need user input for choosing year, season, daytype
             year = 2026
             season = "p1"
             daytype = "fr"
             scenario = str(year) + season + daytype
-            xmlscc_df = csvxmlgen.aggsccgen(
-                act_emis_dict=act_emis_dict,
-                nei_pols=nei_pols,
-                year=year,
-                season=season,
-                daytype=daytype,
-            )
-            xmlscc_df.to_csv(
-                self.out_dir_pp.joinpath(f"{scenario}_XmlSCCStagingTable.csv"),
-                index=False,
-            )
             # xmlgen.xmlgen()
 
 
@@ -436,4 +447,3 @@ if __name__ == "__main__":
     ppgui.check_params()
     ppgui.save_params()
     ppgui.run_pp()
-    ppgui.get_param()

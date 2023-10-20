@@ -18,15 +18,12 @@ class CsvXmlGen:
     quality checks, adding labels to the data, generating detailed CSV files, aggregating
     data, and creating XML files for various scenarios.
 
-    Parameters
-    ----------
-    gui_obj : object
-        An instance of the PostProcessorGUI class, which provides input parameters and
-        data sources for post-processing.
-
     Attributes
     ----------
-    logger : logging.Logger
+    gui_obj: object
+        An instance of the PostProcessorGUI class, which provides input parameters and
+        data sources for post-processing.
+    logger: logging.Logger
         A logger for recording information and errors during the data processing.
     settings : dict
         Configuration settings for data processing.
@@ -74,7 +71,7 @@ class CsvXmlGen:
 
     aggsccgen(
         act_emis_dict,
-        nei_pols,
+        xml_pols_selected,
         xml_year_selected,
         xml_season_selected,
         xml_daytype_selected,
@@ -92,22 +89,6 @@ class CsvXmlGen:
 
     emis_add_labs(df_)
         Add labels to emissions data and return the result as a DataFrame.
-
-    Example Usage
-    -------------
-    # Create an instance of CsvXmlGen
-    csv_xml_gen = CsvXmlGen(gui_obj)
-
-    # Generate detailed CSV files
-    detailed_data = csv_xml_gen.detailedcsvgen()
-
-    # Aggregate data and generate summary Excel files
-    aggregated_data = csv_xml_gen.aggxlsxgen(detailed_data)
-
-    # Aggregate emissions data to NEI SCCs
-    nei_scc_data = csv_xml_gen.aggsccgen(
-        detailed_data, nei_pols, xml_year_selected, xml_season_selected, xml_daytype_selected
-    )
     """
 
     def __init__(self, gui_obj):
@@ -297,10 +278,6 @@ class CsvXmlGen:
 
         This method is responsible for performing quality control checks on the activity
         data used in the CsvXmlGen class.
-
-        Returns
-        -------
-        None
         """
         # ToDo: Add test function:
         set(self.settings["csvxml_act"]).symmetric_difference(set(self.act_df.columns))
@@ -312,10 +289,6 @@ class CsvXmlGen:
 
         This method is responsible for performing quality control checks on the emissions
         data used in the CsvXmlGen class.
-
-        Returns
-        -------
-        None
         """
         # ToDo: Add test function:
         set(self.settings["csvxml_ei"]).symmetric_difference(set(self.emis_df.columns))
@@ -327,10 +300,6 @@ class CsvXmlGen:
 
         This method is responsible for performing quality control checks on the output
         data used in the CsvXmlGen class.
-
-        Returns
-        -------
-        None
         """
         # ToDo: Add test function:
         set(self.settings["csvxml_act"]).symmetric_difference(set(self.act_df.columns))
@@ -553,7 +522,7 @@ class CsvXmlGen:
     def aggsccgen(
         self,
         act_emis_dict,
-        nei_pols,
+        xml_pols_selected,
         xml_year_selected,
         xml_season_selected,
         xml_daytype_selected,
@@ -568,7 +537,7 @@ class CsvXmlGen:
         ----------
         act_emis_dict : dict
             A dictionary containing detailed activity and emissions data.
-        nei_pols : list
+        xml_pols_selected : list
             A list of pollutant codes for NEI.
         xml_year_selected : int
             The selected year for NEI data.
@@ -588,7 +557,7 @@ class CsvXmlGen:
         scc_emis_df = (
             act_emis_dict["emis"]
             .loc[
-                lambda df: (df.pollutantCode.isin(nei_pols))
+                lambda df: (df.pollutantCode.isin(xml_pols_selected))
                 & (df.year == xml_year_selected)
                 & (df.season == xml_season_selected)
                 & (df.dayType == xml_daytype_selected)

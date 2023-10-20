@@ -8,11 +8,6 @@ class XMLGenerator:
     """
     XMLGenerator class for generating XML documents using the lxml library.
 
-    Parameters
-    ----------
-    xml_data : dict
-        A dictionary containing the data for generating the XML document.
-
     Attributes
     ----------
     xml_data : dict
@@ -37,21 +32,6 @@ class XMLGenerator:
     generate_xml()
         Generate the complete XML document based on the input data and return it as an
         ElementTree object.
-
-    Example Usage
-    -------------
-    xml_data = {
-        "Header": {
-            # Define your header data here
-        },
-        "Payload": {
-            # Define your payload data here
-        },
-    }
-
-    xml_generator = XMLGenerator(xml_data)
-    generated_xml = xml_generator.generate_xml()
-    print(generated_xml)
     """
 
     def __init__(self, xml_data):
@@ -298,18 +278,3 @@ class XMLGenerator:
             root, pretty_print=True, encoding="utf-8", xml_declaration=True
         ).decode()
         return tree
-
-
-if __name__ == "__main__":
-    xml_data = {
-        "Header": {
-            # Define your header data here
-        },
-        "Payload": {
-            # Define your payload data here
-        },
-    }
-
-    xml_generator = XMLGenerator(xml_data)
-    generated_xml = xml_generator.generate_xml()
-    print(generated_xml)

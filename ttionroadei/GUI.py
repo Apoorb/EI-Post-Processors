@@ -29,16 +29,13 @@ class PostProcessorGUI:
     provides methods for setting paths, specifying input options, saving parameters,
     and running the post-processing workflow.
 
-    Parameters
-    ----------
-    ei_base_dir : str or None, optional
-        The base directory for MOVES input data. If not provided, the class will use
-        default settings.
-    log_dir : str, optional
-        The directory for log files. Default is "./logs".
-
     Attributes
     ----------
+    ei_base_dir: str or None, optional
+        The base directory for MOVES input data. If not provided, the class will use
+        default settings.
+    log_dir: str, optional
+        The directory for log files. Default is "./logs".
     log_dir : str
         The directory for log files.
     logger : logging.Logger
@@ -177,14 +174,6 @@ class PostProcessorGUI:
         post-processing workflow, such as input data directories and output directories.
         It also configures the logging directory and logger for recording information
         and errors.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
         """
         self.ei_dir = Path(
             r"E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - "
@@ -289,14 +278,6 @@ class PostProcessorGUI:
         This method allows the developer to specify options for post-processing CSV files,
         including the choice of emissions data categories, analysis areas, counties,
         years, seasons, day types, and pollutant codes.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
         """
         # 1. Based on the inventory type chosen for the GUI for the emission calc (
         # previous module),
@@ -400,14 +381,6 @@ class PostProcessorGUI:
         This method sets the post-processing parameters for generating detailed CSV
         files based on the specified options. It includes the selection of emissions
         data categories, areas, counties, years, seasons, day types, and pollutant codes.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
         """
         self.eis_selected = ["EMS", "TEC"]  #  "RF",
         self.area_selected = "HGB"
@@ -460,14 +433,6 @@ class PostProcessorGUI:
         This method allows the user to specify options for post-processing XML files,
         including the choice of pollutant codes, years, seasons, and day types for
         generating the XML output.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
         """
         self.xml_pollutant_codes_dropdown = ["CO", "NOx", "PM10", "PM25"]
         self.xml_year_dropdown = self.years_selected
@@ -481,14 +446,6 @@ class PostProcessorGUI:
         This method sets the post-processing parameters for generating XML files based
         on the specified options. It includes the selection of pollutant codes, years,
         seasons, day types, and other XML header information.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
         """
         self.xml_pollutant_codes_selected = ["CO", "NOx", "PM10", "PM25"]
         self.xml_year_selected = 2026
@@ -528,14 +485,6 @@ class PostProcessorGUI:
 
         This method saves the post-processing parameters and configuration as a YAML
         file for future reference and reproducibility.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
         """
         # Define a dictionary to hold all the variables
         self.check_params()
@@ -582,14 +531,6 @@ class PostProcessorGUI:
         This method performs checks to ensure that the provided post-processing
         parameters are valid and consistent. It helps identify potential issues or
         errors in the parameter settings.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
         """
         ...
 
@@ -726,18 +667,9 @@ class PostProcessorGUI:
     def run_pp(self):
         """
         Execute the post-processing workflow, including generating CSV and XML files.
-
         This method executes the complete post-processing workflow, which includes
         generating detailed CSV files, aggregated and pivoted CSV files, and XML files
         for emissions data based on the specified parameters and options.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
         """
         csvxmlgen = CsvXmlGen(self)
         act_out_fi = self.out_dir_pp.joinpath("activityDetailed.csv")

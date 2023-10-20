@@ -17,7 +17,7 @@ from ttionroadei.utils import (
     delete_old_log_files,
 )
 from ttionroadei.csvxmlpostprc.csvxmlgen import CsvXmlGen
-from ttionroadei.csvxmlpostprc import xmlgen
+from ttionroadei.csvxmlpostprc.xmlgen import XMLGenerator
 
 
 class PostProcessorGUI:
@@ -26,6 +26,12 @@ class PostProcessorGUI:
         # TODO: Change to MOVES 4 utilities structure. I am using old utilities. I am
         #  hard coding. Handle this through a config file or setting.py. Ideally
         #  concatenate the paths based on the `ei_base_dir` path.
+        self.log_dir = log_dir
+        self.logger = lg.getLogger(name=__file__)
+        self.logger = _add_handler(dir=self.log_dir, logger=self.logger)
+        self.logger.info(
+            ".........................Post-processing initialed........................."
+        )
         delete_old_log_files(log_directory=log_dir, max_age_in_days=30)
         self.pollutant_codes_nei_selected = dict()
         self.pollutant_codes_nei_dropdown = list()
@@ -43,12 +49,6 @@ class PostProcessorGUI:
         self.output_yaml_file = ""
         self.onroadei_dir = ""
         self.ei_base_dir = None
-        self.log_dir = log_dir
-        self.logger = lg.getLogger(name=__file__)
-        self.logger = _add_handler(dir=self.log_dir, logger=self.logger)
-        self.logger.info(
-            ".........................Post-processing initialed........................."
-        )
         ##### Parameters ###############################################################
         self.ei_dropdown = tuple()
         self.ei_selected = tuple()
@@ -80,15 +80,15 @@ class PostProcessorGUI:
         self.genaggpivfiles = True
         self.genxmlfile = True
         ##### XML Fields ###############################################################
-        self.xml_pollutant_codes_dropdown = list()
-        self.xml_year_dropdown = list()
-        self.xml_season_dropdown = list()
-        self.xml_daytype_dropdown = list()
-        self.xml_pollutant_codes_selected = list()
-        self.xml_year_selected = int()
-        self.xml_season_selected = ""
-        self.xml_daytype_selected = ""
-        self.xml = {"Header": {}, "Payload": {}}
+        self.xml_data_pollutant_codes_dropdown = list()
+        self.xml_data_year_dropdown = list()
+        self.xml_data_season_dropdown = list()
+        self.xml_data_daytype_dropdown = list()
+        self.xml_data_pollutant_codes_selected = list()
+        self.xml_data_year_selected = int()
+        self.xml_data_season_selected = ""
+        self.xml_data_daytype_selected = ""
+        self.xml_data = {"Header": {}, "Payload": {}}
 
     def set_paths(self):
         self.ei_dir = Path(
@@ -284,45 +284,47 @@ class PostProcessorGUI:
         # c) XML file
 
     def provide_xml_options(self):
-        self.xml_pollutant_codes_dropdown = set(
+        self.xml_data_pollutant_codes_dropdown = set(
             self.pollutant_codes_nei_selected
         ) - set(["PM10"])
-        self.xml_year_dropdown = self.year_selected
-        self.xml_season_dropdown = self.season_selected
-        self.xml_daytype_dropdown = self.daytype_selected
+        self.xml_data_year_dropdown = self.year_selected
+        self.xml_data_season_dropdown = self.season_selected
+        self.xml_data_daytype_dropdown = self.daytype_selected
 
     def set_xml_param(self):
-        self.xml_pollutant_codes_selected = set(
+        self.xml_data_pollutant_codes_selected = set(
             self.pollutant_codes_nei_selected
         ) - set(["PM10"])
-        self.xml_year_selected = 2026
-        self.xml_season_selected = "p1"
-        self.xml_daytype_selected = "fr"
-        self.xml["Header"]["id"] = "HGB_20"
-        self.xml["Header"]["AuthorName"] = "Mogwai Turner"
-        self.xml["Header"][
+        self.xml_data_year_selected = 2026
+        self.xml_data_season_selected = "p1"
+        self.xml_data_daytype_selected = "fr"
+        self.xml_data["Header"]["id"] = "HGB_20"
+        self.xml_data["Header"]["AuthorName"] = "Mogwai Turner"
+        self.xml_data["Header"][
             "OrganizationName"
         ] = "Texas Commission on Environmental Quality"
-        self.xml["Header"]["DocumentTitle"] = "EIS"
-        self.xml["Header"]["CreationDateTime"] = "2022-04-22T14:32:31"
-        self.xml["Header"]["Comment"] = (
+        self.xml_data["Header"]["DocumentTitle"] = "EIS"
+        self.xml_data["Header"]["CreationDateTime"] = "2022-04-22T14:32:31"
+        self.xml_data["Header"]["Comment"] = (
             "AERR MOVES 3.0.3-based 2020 annual on-road inventories for 254 Texas Counties"
             " produced by TTI; SCCs and pollutant codes per EPA 2020 NEI instructions"
         )
 
-        self.xml["Header"]["DataFlowName"] = "CERS_V2"
-        self.xml["Header"]["Properties"] = {
+        self.xml_data["Header"]["DataFlowName"] = "CERS_V2"
+        self.xml_data["Header"]["Properties"] = {
             "SubmissionType": "QA",
             "DataCategory": "Onroad",
         }
-        self.xml["Payload"]["UserIdentifier"] = "XMTURN02"
-        self.xml["Payload"]["ProgramSystemCode"] = "TXCEQ"
-        self.xml["Payload"]["EmissionsYear"] = f"{self.xml_year_selected}"
-        self.xml["Payload"]["Model"] = "MOVES"
-        self.xml["Payload"]["ModelVersion"] = "MOVES3.0.3"
-        self.xml["Payload"][
+        self.xml_data["Payload"]["UserIdentifier"] = "XMTURN02"
+        self.xml_data["Payload"]["ProgramSystemCode"] = "TXCEQ"
+        self.xml_data["Payload"]["EmissionsYear"] = f"{self.xml_data_year_selected}"
+        self.xml_data["Payload"]["Model"] = "MOVES"
+        self.xml_data["Payload"]["ModelVersion"] = "MOVES3.0.3"
+        self.xml_data["Payload"][
             "SubmittalComment"
         ] = "AERR MOVES 3.0.3-based 2020 annual on-road inventories for 254 Texas Counties"
+        self.xml_data["Payload"]["ReportingPeriod"] = "O3D"
+        self.xml_data["Payload"]["CalculationParameterTypeCode"] = "I"
 
     def _get_roadtype(self):
         # TODO: add error checking to see if the area exisits in the mapping file.
@@ -398,7 +400,7 @@ class PostProcessorGUI:
             "ei_fis_RF": {key: str(value) for key, value in self.ei_fis_RF.items()},
             "ei_fis_TEC": {key: str(value) for key, value in self.ei_fis_TEC.items()},
             "act_fis": {key: str(value) for key, value in self.act_fis.items()},
-            "xml_data": self.xml,
+            "xml_data": self.xml_data,
         }
         # Define the output YAML file path
 
@@ -480,16 +482,18 @@ class PostProcessorGUI:
                 self.out_dir_pp.joinpath("xmlSCCStagingTable.csv"),
             )
             xmlscc_df_filt = xmlscc_df.loc[
-                lambda df: (df.year == self.xml_year_selected)
-                & (df.season == self.xml_season_selected)
-                & (df.dayType == self.xml_daytype_selected)
+                lambda df: (df.year == self.xml_data_year_selected)
+                & (df.season == self.xml_data_season_selected)
+                & (df.dayType == self.xml_data_daytype_selected)
             ]
-            self.xml["Payload"]["Location"] = xmlscc_df_filt
-            xml_fi_name = f"{self.area_selected}{self.xml_year_selected}{self.xml_season_selected}{self.xml_daytype_selected}.xml"
+            self.xml_data["Payload"]["Location"] = xmlscc_df_filt
+            xml_fi_name = f"{self.area_selected}{self.xml_data_year_selected}{self.xml_data_season_selected}{self.xml_data_daytype_selected}.xml"
             xmlscc_out_fi = self.out_dir_pp.joinpath(xml_fi_name)
-            xml_string = xmlgen.xmlgen(self.xml)
-            with open(xmlscc_out_fi, "w", encoding="utf-8") as file:
-                file.write(xml_string)
+            xmlgen_obj = XMLGenerator(self.xml_data)
+            tree = xmlgen_obj.generate_xml()
+            tree.write(
+                xmlscc_out_fi, pretty_print=True, xml_declaration=True, encoding="utf-8"
+            )
             self.logger.info(msg=f"Saved XML to {str(xmlscc_out_fi)}.")
             self.logger.info(
                 ".........................Post-processing ended........................."

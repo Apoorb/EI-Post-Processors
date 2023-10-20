@@ -118,3 +118,5 @@ xml_data:
     ModelVersion: MOVES3.0.3
     SubmittalComment: AERR MOVES 3.0.3-based 2020 annual on-road inventories for 254
       Texas Counties
+    ReportingPeriod: O3D
+    CalculationParameterTypeCode: I

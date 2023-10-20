@@ -1,11 +1,23 @@
+"""
+XML generation code
+"""
 from lxml import etree
 import pandas as pd
 
 
-def create_header_element(xml_data, namespace):
-    header = etree.Element(etree.QName(namespace["hdr"], "Header"))
+def create_element(parent, namespace, element_name, text=None):
+    element = etree.Element(etree.QName(namespace, element_name))
+    if text is not None:
+        element.text = text
+    if parent is not None:
+        parent.append(element)
+    return element
 
-    elements = {
+
+def create_header_element(xml_data, namespace):
+    header = create_element(None, namespace["hdr"], "Header")
+
+    header_elements = {
         "AuthorName": "AuthorName",
         "OrganizationName": "OrganizationName",
         "DocumentTitle": "DocumentTitle",
@@ -14,33 +26,22 @@ def create_header_element(xml_data, namespace):
         "DataFlowName": "DataFlowName",
     }
 
-    for key, element_name in elements.items():
-        element = etree.SubElement(header, etree.QName(namespace["hdr"], element_name))
-        element.text = xml_data["Header"][key]
+    for key, element_name in header_elements.items():
+        create_element(header, namespace["hdr"], element_name, xml_data["Header"][key])
 
     for prop_name, prop_value in xml_data["Header"]["Properties"].items():
-        property_elem = etree.SubElement(
-            header, etree.QName(namespace["hdr"], "Property")
-        )
-        property_name = etree.SubElement(
-            property_elem, etree.QName(namespace["hdr"], "PropertyName")
-        )
-        property_name.text = prop_name
-        property_value = etree.SubElement(
-            property_elem, etree.QName(namespace["hdr"], "PropertyValue")
-        )
-        property_value.text = prop_value
+        property_elem = create_element(header, namespace["hdr"], "Property")
+        create_element(property_elem, namespace["hdr"], "PropertyName", prop_name)
+        create_element(property_elem, namespace["hdr"], "PropertyValue", prop_value)
 
     return header
 
 
 def create_payload_element(xml_data, namespace):
-    payload = etree.Element(
-        etree.QName(namespace["hdr"], "Payload"), operation="refresh"
-    )
-    cers = etree.SubElement(payload, etree.QName(namespace["cer"], "CERS"))
+    payload = create_element(None, namespace["hdr"], "Payload")
+    cers = create_element(payload, namespace["cer"], "CERS")
 
-    elements = {
+    payload_elements = {
         "UserIdentifier": "UserIdentifier",
         "ProgramSystemCode": "ProgramSystemCode",
         "EmissionsYear": "EmissionsYear",
@@ -49,88 +50,95 @@ def create_payload_element(xml_data, namespace):
         "SubmittalComment": "SubmittalComment",
     }
 
-    for key, element_name in elements.items():
-        element = etree.SubElement(cers, etree.QName(namespace["cer"], element_name))
-        element.text = xml_data["Payload"][key]
+    for key, element_name in payload_elements.items():
+        create_element(cers, namespace["cer"], element_name, xml_data["Payload"][key])
+
     grp = xml_data["Payload"]["Location"].groupby(["FIPS"])
     for FIPS, df_FIPS in grp:
         grp_sccNEI = df_FIPS.groupby(["sccNEI"])
-        location = etree.SubElement(cers, etree.QName(namespace["cer"], "Location"))
-        state_and_county_fips_code = etree.SubElement(
-            location, etree.QName(namespace["cer"], "StateAndCountyFIPSCode")
+        location = create_element(cers, namespace["cer"], "Location")
+        create_element(
+            location, namespace["cer"], "StateAndCountyFIPSCode", str(FIPS[0])
         )
-        state_and_county_fips_code.text = f"{FIPS[0]}"
         for SCC, df_sccNEI in grp_sccNEI:
             location_emissions_process = create_location_emissions_process_element(
-                df_sccNEI, SCC, namespace
+                df_sccNEI, xml_data, SCC, namespace
             )
             location.append(location_emissions_process)
+
     return payload
 
 
-def create_location_emissions_process_element(data, SCC, namespace):
-    location_emissions_process = etree.Element(
-        etree.QName(namespace["cer"], "LocationEmissionsProcess")
+def create_location_emissions_process_element(data, xml_data, SCC, namespace):
+    location_emissions_process = create_element(
+        None, namespace["cer"], "LocationEmissionsProcess"
     )
 
-    source_classification_code = etree.SubElement(
+    create_element(
         location_emissions_process,
-        etree.QName(namespace["cer"], "SourceClassificationCode"),
+        namespace["cer"],
+        "SourceClassificationCode",
+        str(SCC[0]),
     )
-    source_classification_code.text = f"{SCC[0]}"
-
-    reporting_period = etree.SubElement(
-        location_emissions_process, etree.QName(namespace["cer"], "ReportingPeriod")
+    reporting_period = create_element(
+        location_emissions_process, namespace["cer"], "ReportingPeriod"
     )
-    reporting_period_type_code = etree.SubElement(
-        reporting_period, etree.QName(namespace["cer"], "ReportingPeriodTypeCode")
-    )
-    reporting_period_type_code.text = "O3D"
-    calculation_parameter_type_code = etree.SubElement(
-        reporting_period, etree.QName(namespace["cer"], "CalculationParameterTypeCode")
-    )
-    calculation_parameter_type_code.text = "I"
-    calculation_parameter_value = etree.SubElement(
-        reporting_period, etree.QName(namespace["cer"], "CalculationParameterValue")
-    )
-    calculation_parameter_value.text = str(data.iloc[0]["E6MILE"])
-    calculation_parameter_unit_of_measure = etree.SubElement(
+    create_element(
         reporting_period,
-        etree.QName(namespace["cer"], "CalculationParameterUnitofMeasure"),
+        namespace["cer"],
+        "ReportingPeriodTypeCode",
+        xml_data["Payload"]["ReportingPeriod"],
     )
-    calculation_parameter_unit_of_measure.text = "E6MILE"
-
-    calculation_material_code = etree.SubElement(
-        reporting_period, etree.QName(namespace["cer"], "CalculationMaterialCode")
+    create_element(
+        reporting_period,
+        namespace["cer"],
+        "CalculationParameterTypeCode",
+        xml_data["Payload"]["CalculationParameterTypeCode"],
+    )
+    create_element(
+        reporting_period,
+        namespace["cer"],
+        "CalculationParameterValue",
+        str(data.iloc[0]["E6MILE"]),
+    )
+    create_element(
+        reporting_period,
+        namespace["cer"],
+        "CalculationParameterUnitofMeasure",
+        "E6MILE",
+    )
+    calculation_material_code = create_element(
+        reporting_period, namespace["cer"], "CalculationMaterialCode"
     )
     if str(SCC[0])[3] == "1":
-        calculationmaterialcode = "127"
+        calculation_material_code.text = "127"
     elif str(SCC[0])[3] == "2":
-        calculationmaterialcode = "44"
+        calculation_material_code.text = "44"
     else:
         raise ValueError("SCC[3] can only be 1 (gas) or 2 (diesel) for MOVES3.")
-    calculation_material_code.text = calculationmaterialcode
 
     for idx, row in data.iterrows():
-        reporting_period_emissions = etree.SubElement(
-            reporting_period, etree.QName(namespace["cer"], "ReportingPeriodEmissions")
+        reporting_period_emissions = create_element(
+            reporting_period, namespace["cer"], "ReportingPeriodEmissions"
         )
-
-        pollutant_code = etree.SubElement(
-            reporting_period_emissions, etree.QName(namespace["cer"], "PollutantCode")
-        )
-        pollutant_code.text = row["pollutantCode"]
-
-        total_emissions = etree.SubElement(
-            reporting_period_emissions, etree.QName(namespace["cer"], "TotalEmissions")
-        )
-        total_emissions.text = str(row["emission"])
-
-        emissions_unit_of_measure_code = etree.SubElement(
+        create_element(
             reporting_period_emissions,
-            etree.QName(namespace["cer"], "EmissionsUnitofMeasureCode"),
+            namespace["cer"],
+            "PollutantCode",
+            row["pollutantCode"],
         )
-        emissions_unit_of_measure_code.text = row["emissionunits"]
+        create_element(
+            reporting_period_emissions,
+            namespace["cer"],
+            "TotalEmissions",
+            str(row["emission"]),
+        )
+        create_element(
+            reporting_period_emissions,
+            namespace["cer"],
+            "EmissionsUnitofMeasureCode",
+            row["emissionunits"],
+        )
 
     return location_emissions_process
 
@@ -151,18 +159,13 @@ def xmlgen(xml_data):
 
     header_element = create_header_element(xml_data, namespace)
     payload_element = create_payload_element(xml_data, namespace)
-
     root.append(header_element)
     root.append(payload_element)
-
     xml_string = etree.tostring(
         root, pretty_print=True, encoding="utf-8", xml_declaration=True
     ).decode()
-
-    print(xml_string)
-    output_file = "output.xml"
-    with open(output_file, "w", encoding="utf-8") as file:
-        file.write(xml_string)
+    # print(xml_string)
+    return xml_string
 
 
 if __name__ == "__main__":

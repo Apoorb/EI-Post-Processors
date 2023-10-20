@@ -1,4 +1,4 @@
-ei_selected:
+eis_selected:
 - EMS
 - TEC
 area_selected: HGB
@@ -17,27 +17,32 @@ pollutant_map_codes_selected:
   - 2
   NOx:
   - 3
+  PM10:
+  - 100
+  - 106
+  - 107
   TEC:
   - 91
-pollutant_codes_nei_selected:
+xml_pollutant_codes_selected:
 - CO
 - NOx
+- PM10
 input_units:
   mass: grams
   energy: Kilojoules
 output_units:
-  mass: pound
-  energy: Kilojoules
+  mass: short_ton
+  energy: MBTU
 conversion_factor:
   input_units:
     0: grams
     1: Kilojoules
   output_units:
-    0: pound
-    1: Kilojoules
+    0: short_ton
+    1: MBTU
   confactor:
-    0: 0.0022046226218487754
-    1: 1.0
+    0: 1.1023113109243878e-06
+    1: 9.478169879134377e-07
 fi_temp_tdm_hpms_rdtype: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects
   - FY2024_Utility_Development\Resources\Input Data\Road Type Mapping\RoadType_Designation.csv
 use_tdm_area_rdtype: true

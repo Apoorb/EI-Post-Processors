@@ -33,8 +33,6 @@ class PostProcessorGUI:
             ".........................Post-processing initialed........................."
         )
         delete_old_log_files(log_directory=log_dir, max_age_in_days=30)
-        self.pollutant_codes_nei_selected = dict()
-        self.pollutant_codes_nei_dropdown = list()
         self.labels = dict()
         self.ei_base_dir = ""
         self.out_dir = ""
@@ -51,17 +49,17 @@ class PostProcessorGUI:
         self.ei_base_dir = None
         ##### Parameters ###############################################################
         self.ei_dropdown = tuple()
-        self.ei_selected = tuple()
+        self.eis_selected = tuple()
         self.area_dropdown = tuple()
         self.area_selected = str
         self.FIPS_dropdown = tuple()
-        self.FIPS_selected = tuple()
-        self.year_selected = tuple()
+        self.FIPSs_selected = tuple()
+        self.years_selected = tuple()
         self.year_dropdown = tuple()
         self.season_dropdown = tuple()
-        self.season_selected = tuple()
+        self.seasons_selected = tuple()
         self.daytype_dropdown = tuple()
-        self.daytype_selected = tuple()
+        self.daytypes_selected = tuple()
         self.pollutant_codes_dropdown = tuple()
         # TODO: Need a mapping file to MOVES pollutantIDs
         self.pollutant_map = dict()
@@ -80,14 +78,14 @@ class PostProcessorGUI:
         self.genaggpivfiles = True
         self.genxmlfile = True
         ##### XML Fields ###############################################################
-        self.xml_data_pollutant_codes_dropdown = list()
-        self.xml_data_year_dropdown = list()
-        self.xml_data_season_dropdown = list()
-        self.xml_data_daytype_dropdown = list()
-        self.xml_data_pollutant_codes_selected = list()
-        self.xml_data_year_selected = int()
-        self.xml_data_season_selected = ""
-        self.xml_data_daytype_selected = ""
+        self.xml_pollutant_codes_dropdown = list()
+        self.xml_year_dropdown = list()
+        self.xml_season_dropdown = list()
+        self.xml_daytype_dropdown = list()
+        self.xml_pollutant_codes_selected = list()
+        self.xml_year_selected = int()
+        self.xml_season_selected = ""
+        self.xml_daytype_selected = ""
         self.xml_data = {"Header": {}, "Payload": {}}
 
     def set_paths(self):
@@ -139,6 +137,52 @@ class PostProcessorGUI:
         self.out_dir = Path(r"C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24")
         self.out_dir_pp = self.out_dir.joinpath("Summary")
         self.out_dir_pp.mkdir(exist_ok=True)
+
+    def _get_roadtype(self):
+        # TODO: add error checking to see if the area exisits in the mapping file.
+        self.use_tdm_area_rdtype = True
+        self.use_hpms_area_rdtype = False
+        if self.use_tdm_area_rdtype or self.use_hpms_area_rdtype:
+            self.tdm_hpms_rdtype = pd.read_csv(self.fi_temp_tdm_hpms_rdtype)
+            self.tdm_hpms_rdtype = self.tdm_hpms_rdtype.drop(columns=["MOVES_RoadType"])
+            self.tdm_hpms_rdtype = self.tdm_hpms_rdtype.rename(
+                columns={
+                    "Area": "area",
+                    "TDM_FunctionClass_Code": "funcClassID",
+                    "FunctionClass": "funcClass",
+                    "TDM_AreaType_Code": "areaTypeID",
+                    "AreaType": "areaType",
+                    "MOVES_RoadTypeID": "mvsRoadTypeID",
+                }
+            )
+        area_sel = ""
+        if self.use_tdm_area_rdtype:
+            area_sel = self.area_selected
+        elif self.use_hpms_area_rdtype:
+            area_sel = "VLink"
+        else:
+            area_sel = ""
+        try:
+            self.tdm_hpms_rdtype_flt = self.tdm_hpms_rdtype[
+                lambda df: df.area == area_sel
+            ].reset_index(drop=True)
+            if (area_sel != "") and (len(self.tdm_hpms_rdtype_flt) == 0):
+                raise ValueError("Empty raod type mapping file.")
+        except ValueError as verr:
+            self.logger.error(msg=f"Area type not in the road type file. {verr}")
+        off_net = pd.DataFrame(
+            {
+                "area": [self.tdm_hpms_rdtype_flt.loc[0, "area"]],
+                "funcClassID": [-99],
+                "areaTypeID": [-99],
+                "areaType": ["N/A"],
+                "funcClass": ["Off-Network"],
+                "mvsRoadTypeID": [1],
+            }
+        )
+        self.tdm_hpms_rdtype_flt = pd.concat(
+            [self.tdm_hpms_rdtype_flt, off_net]
+        ).reset_index(drop=True)
 
     def provide_csv_options(self):
         # 1. Based on the inventory type chosen for the GUI for the emission calc (
@@ -194,7 +238,6 @@ class PostProcessorGUI:
             "fr",
         ]
         self.pollutant_codes_dropdown = ["CO", "NOx", "PM10"]
-        self.pollutant_codes_nei_dropdown = ["CO", "NOx", "PM10"]
         # ToDo: Need a mapping file for pollutant codes to pollutants
         # FixMe: How are me going to get this inputs?
         #   - NEI pollutants?
@@ -215,8 +258,8 @@ class PostProcessorGUI:
             "energy": "Kilojoules",
         }  # Read from previous module!
         self.output_units = {
-            "mass": "pound",
-            "energy": "Kilojoules",
+            "mass": "short_ton",
+            "energy": "MBTU",
         }  # Fixme change this
         mass_confactor = unit_converter(
             in_unit=self.input_units["mass"], out_unit=self.output_units["mass"]
@@ -237,20 +280,20 @@ class PostProcessorGUI:
         # TODO: Use MOVES/ CG's units names
 
     def set_csv_param(self):
-        self.ei_selected = ["EMS", "TEC"]  #  "RF",
+        self.eis_selected = ["EMS", "TEC"]  #  "RF",
         self.area_selected = "HGB"
-        self.FIPS_selected = [
+        self.FIPSs_selected = [
             48201,
             48039,
             48157,
         ]
-        self.year_selected = [
+        self.years_selected = [
             2026,
         ]
-        self.season_selected = ("p1",)
-        self.daytype_selected = ("fr",)
-        self.pollutant_codes_selected = ["CO", "NOx"]  # , "TEC"
-        if "TEC" in self.ei_selected:
+        self.seasons_selected = ("p1",)
+        self.daytypes_selected = ("fr",)
+        self.pollutant_codes_selected = ["CO", "NOx", "PM10"]  # , "TEC"
+        if "TEC" in self.eis_selected:
             if "TEC" not in self.pollutant_codes_selected:
                 self.pollutant_codes_selected.append("TEC")
         self.pollutant_map_codes_selected = {
@@ -258,8 +301,6 @@ class PostProcessorGUI:
             for k, v in self.pollutant_map.items()
             if k in self.pollutant_codes_selected
         }
-        # ToDo NEI pollutants need to be a subset of `self.pollutant_codes_selected`
-        self.pollutant_codes_nei_selected = ["CO", "NOx"]
         # 6. Based on the area chosen, run code in the backend to get the road-type
         # mapping.
         # TODO: Ask the user the road type info needed (MOVES or TDM or HPMS?). Use
@@ -284,20 +325,16 @@ class PostProcessorGUI:
         # c) XML file
 
     def provide_xml_options(self):
-        self.xml_data_pollutant_codes_dropdown = set(
-            self.pollutant_codes_nei_selected
-        ) - set(["PM10"])
-        self.xml_data_year_dropdown = self.year_selected
-        self.xml_data_season_dropdown = self.season_selected
-        self.xml_data_daytype_dropdown = self.daytype_selected
+        self.xml_pollutant_codes_dropdown = ["CO", "NOx", "PM10"]
+        self.xml_year_dropdown = self.years_selected
+        self.xml_season_dropdown = self.seasons_selected
+        self.xml_daytype_dropdown = self.daytypes_selected
 
     def set_xml_param(self):
-        self.xml_data_pollutant_codes_selected = set(
-            self.pollutant_codes_nei_selected
-        ) - set(["PM10"])
-        self.xml_data_year_selected = 2026
-        self.xml_data_season_selected = "p1"
-        self.xml_data_daytype_selected = "fr"
+        self.xml_pollutant_codes_selected = ["CO", "NOx", "PM10"]
+        self.xml_year_selected = 2026
+        self.xml_season_selected = "p1"
+        self.xml_daytype_selected = "fr"
         self.xml_data["Header"]["id"] = "HGB_20"
         self.xml_data["Header"]["AuthorName"] = "Mogwai Turner"
         self.xml_data["Header"][
@@ -317,7 +354,7 @@ class PostProcessorGUI:
         }
         self.xml_data["Payload"]["UserIdentifier"] = "XMTURN02"
         self.xml_data["Payload"]["ProgramSystemCode"] = "TXCEQ"
-        self.xml_data["Payload"]["EmissionsYear"] = f"{self.xml_data_year_selected}"
+        self.xml_data["Payload"]["EmissionsYear"] = f"{self.xml_year_selected}"
         self.xml_data["Payload"]["Model"] = "MOVES"
         self.xml_data["Payload"]["ModelVersion"] = "MOVES3.0.3"
         self.xml_data["Payload"][
@@ -326,64 +363,18 @@ class PostProcessorGUI:
         self.xml_data["Payload"]["ReportingPeriod"] = "O3D"
         self.xml_data["Payload"]["CalculationParameterTypeCode"] = "I"
 
-    def _get_roadtype(self):
-        # TODO: add error checking to see if the area exisits in the mapping file.
-        self.use_tdm_area_rdtype = True
-        self.use_hpms_area_rdtype = False
-        if self.use_tdm_area_rdtype or self.use_hpms_area_rdtype:
-            self.tdm_hpms_rdtype = pd.read_csv(self.fi_temp_tdm_hpms_rdtype)
-            self.tdm_hpms_rdtype = self.tdm_hpms_rdtype.drop(columns=["MOVES_RoadType"])
-            self.tdm_hpms_rdtype = self.tdm_hpms_rdtype.rename(
-                columns={
-                    "Area": "area",
-                    "TDM_FunctionClass_Code": "funcClassID",
-                    "FunctionClass": "funcClass",
-                    "TDM_AreaType_Code": "areaTypeID",
-                    "AreaType": "areaType",
-                    "MOVES_RoadTypeID": "mvsRoadTypeID",
-                }
-            )
-        area_sel = ""
-        if self.use_tdm_area_rdtype:
-            area_sel = self.area_selected
-        elif self.use_hpms_area_rdtype:
-            area_sel = "VLink"
-        else:
-            area_sel = ""
-        try:
-            self.tdm_hpms_rdtype_flt = self.tdm_hpms_rdtype[
-                lambda df: df.area == area_sel
-            ].reset_index(drop=True)
-            if (area_sel != "") and (len(self.tdm_hpms_rdtype_flt) == 0):
-                raise ValueError("Empty raod type mapping file.")
-        except ValueError as verr:
-            self.logger.error(msg=f"Area type not in the road type file. {verr}")
-        off_net = pd.DataFrame(
-            {
-                "area": [self.tdm_hpms_rdtype_flt.loc[0, "area"]],
-                "funcClassID": [-99],
-                "areaTypeID": [-99],
-                "areaType": ["N/A"],
-                "funcClass": ["Off-Network"],
-                "mvsRoadTypeID": [1],
-            }
-        )
-        self.tdm_hpms_rdtype_flt = pd.concat(
-            [self.tdm_hpms_rdtype_flt, off_net]
-        ).reset_index(drop=True)
-
     def save_params(self):
         # Define a dictionary to hold all the variables
         self.check_params()
         variables_dict = {
-            "ei_selected": self.ei_selected,
+            "eis_selected": self.eis_selected,
             "area_selected": self.area_selected,
-            "counties_selected": self.FIPS_selected,
-            "year_selected": self.year_selected,
-            "season_selected": self.season_selected,
-            "daytype_selected": self.daytype_selected,
+            "counties_selected": self.FIPSs_selected,
+            "year_selected": self.years_selected,
+            "season_selected": self.seasons_selected,
+            "daytype_selected": self.daytypes_selected,
             "pollutant_map_codes_selected": self.pollutant_map_codes_selected,
-            "pollutant_codes_nei_selected": self.pollutant_codes_nei_selected,
+            "xml_pollutant_codes_selected": self.xml_pollutant_codes_selected,
             "input_units": self.input_units,
             "output_units": self.output_units.copy(),
             "conversion_factor": self.conversion_factor.to_dict(),
@@ -462,10 +453,13 @@ class PostProcessorGUI:
             self.logger.info(
                 msg=f"Processing and combining detailed activity and emission data to develop XML staging table..."
             )
-            nei_pols = self.pollutant_codes_nei_selected
+            xml_pols = self.xml_pollutant_codes_selected
             xmlscc_df = csvxmlgen.aggsccgen(
                 act_emis_dict=act_emis_dict,
-                nei_pols=nei_pols,
+                nei_pols=xml_pols,
+                xml_year_selected=self.xml_year_selected,
+                xml_season_selected=self.xml_season_selected,
+                xml_daytype_selected=self.xml_daytype_selected,
             )
             xmlscc_df.to_csv(
                 self.out_dir_pp.joinpath("xmlSCCStagingTable.csv"),
@@ -479,15 +473,15 @@ class PostProcessorGUI:
                 msg=f"Using Metadata and XML staging table to develop XML..."
             )
             xmlscc_df = pd.read_csv(
-                self.out_dir_pp.joinpath("xmlSCCStagingTable.csv"),
+                xmlscc_csv_out_fi,
             )
             xmlscc_df_filt = xmlscc_df.loc[
-                lambda df: (df.year == self.xml_data_year_selected)
-                & (df.season == self.xml_data_season_selected)
-                & (df.dayType == self.xml_data_daytype_selected)
+                lambda df: (df.year == self.xml_year_selected)
+                & (df.season == self.xml_season_selected)
+                & (df.dayType == self.xml_daytype_selected)
             ]
             self.xml_data["Payload"]["Location"] = xmlscc_df_filt
-            xml_fi_name = f"{self.area_selected}{self.xml_data_year_selected}{self.xml_data_season_selected}{self.xml_data_daytype_selected}.xml"
+            xml_fi_name = f"{self.area_selected}{self.xml_year_selected}{self.xml_season_selected}{self.xml_daytype_selected}.xml"
             xmlscc_out_fi = self.out_dir_pp.joinpath(xml_fi_name)
             xmlgen_obj = XMLGenerator(self.xml_data)
             tree = xmlgen_obj.generate_xml()

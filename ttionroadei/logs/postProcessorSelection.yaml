@@ -1,0 +1,120 @@
+ei_selected:
+- EMS
+- TEC
+area_selected: HGB
+counties_selected:
+- 48201
+- 48039
+- 48157
+year_selected:
+- 2026
+season_selected: !!python/tuple
+- p1
+daytype_selected: !!python/tuple
+- fr
+pollutant_map_codes_selected:
+  CO:
+  - 2
+  NOx:
+  - 3
+  TEC:
+  - 91
+pollutant_codes_nei_selected:
+- CO
+- NOx
+input_units:
+  mass: grams
+  energy: Kilojoules
+output_units:
+  mass: pound
+  energy: Kilojoules
+conversion_factor:
+  input_units:
+    0: grams
+    1: Kilojoules
+  output_units:
+    0: pound
+    1: Kilojoules
+  confactor:
+    0: 0.0022046226218487754
+    1: 1.0
+fi_temp_tdm_hpms_rdtype: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects
+  - FY2024_Utility_Development\Resources\Input Data\Road Type Mapping\RoadType_Designation.csv
+use_tdm_area_rdtype: true
+gendetailedcsvfiles: true
+genaggpivfiles: true
+genxmlfile: true
+ei_base_dir: null
+log_dir: ./logs
+ei_dir: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+  3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output
+summary_dir: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary
+ei_fis_EMS:
+  OnRoad: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\emission_output_VMT.txt
+  APU: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\emission_output_APU.txt
+  ONI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\emission_output_ONI.txt
+  SHEI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\emission_output_SHEI.txt
+  SHP: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\emission_output_SHP.txt
+  Starts: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\emission_output_Starts.txt
+ei_fis_RF:
+  OnRoad: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\RF_emission_output_VMT.txt
+  APU: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\RF_emission_output_APU.txt
+  ONI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\RF_emission_output_ONI.txt
+  SHEI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\RF_emission_output_SHEI.txt
+  Starts: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\RF_emission_output_Starts.txt
+ei_fis_TEC:
+  OnRoad: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\TEC_emission_output_VMT.txt
+  APU: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\TEC_emission_output_APU.txt
+  ONI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\TEC_emission_output_ONI.txt
+  SHEI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\TEC_emission_output_SHEI.txt
+  Starts: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\TEC_emission_output_Starts.txt
+act_fis:
+  OnRoad: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Summarized_output\VMT_st_ft_Summary.txt
+  AdjSHP: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Activity_output\Adjusted_SHP.txt
+  TotSHP: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Activity_output\SHP.txt
+  ONI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Activity_output\ONI.txt
+  APU_SHEI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Activity_output\Hotelling_Hours.txt
+  Starts: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
+    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Activity_output\Start.txt
+xml_data:
+  Header:
+    id: HGB_20
+    AuthorName: Mogwai Turner
+    OrganizationName: Texas Commission on Environmental Quality
+    DocumentTitle: EIS
+    CreationDateTime: '2022-04-22T14:32:31'
+    Comment: AERR MOVES 3.0.3-based 2020 annual on-road inventories for 254 Texas
+      Counties produced by TTI; SCCs and pollutant codes per EPA 2020 NEI instructions
+    DataFlowName: CERS_V2
+    Properties:
+      SubmissionType: QA
+      DataCategory: Onroad
+  Payload:
+    UserIdentifier: XMTURN02
+    ProgramSystemCode: TXCEQ
+    EmissionsYear: '2026'
+    Model: MOVES
+    ModelVersion: MOVES3.0.3
+    SubmittalComment: AERR MOVES 3.0.3-based 2020 annual on-road inventories for 254
+      Texas Counties

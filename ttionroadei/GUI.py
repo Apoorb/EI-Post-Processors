@@ -46,6 +46,9 @@ class PostProcessorGUI:
         self.log_dir = log_dir
         self.logger = lg.getLogger(name=__file__)
         self.logger = _add_handler(dir=self.log_dir, logger=self.logger)
+        self.logger.info(
+            ".........................Post-processing initialed........................."
+        )
         ##### Parameters ###############################################################
         self.ei_dropdown = tuple()
         self.ei_selected = tuple()
@@ -395,6 +398,7 @@ class PostProcessorGUI:
             "ei_fis_RF": {key: str(value) for key, value in self.ei_fis_RF.items()},
             "ei_fis_TEC": {key: str(value) for key, value in self.ei_fis_TEC.items()},
             "act_fis": {key: str(value) for key, value in self.act_fis.items()},
+            "xml_data": self.xml,
         }
         # Define the output YAML file path
 
@@ -469,6 +473,9 @@ class PostProcessorGUI:
                 msg=f"Saved XML staging table to {str(xmlscc_csv_out_fi)}."
             )
 
+            self.logger.info(
+                msg=f"Using Metadata and XML staging table to develop XML..."
+            )
             xmlscc_df = pd.read_csv(
                 self.out_dir_pp.joinpath("xmlSCCStagingTable.csv"),
             )
@@ -483,6 +490,10 @@ class PostProcessorGUI:
             xml_string = xmlgen.xmlgen(self.xml)
             with open(xmlscc_out_fi, "w", encoding="utf-8") as file:
                 file.write(xml_string)
+            self.logger.info(msg=f"Saved XML to {str(xmlscc_out_fi)}.")
+            self.logger.info(
+                ".........................Post-processing ended........................."
+            )
 
 
 if __name__ == "__main__":

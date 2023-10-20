@@ -35,7 +35,8 @@ class XMLGenerator:
         Create an XML element for a location emissions process based on the provided data.
 
     generate_xml()
-        Generate the complete XML document based on the input data and return it as an ElementTree object.
+        Generate the complete XML document based on the input data and return it as an
+        ElementTree object.
 
     Example Usage
     -------------
@@ -76,7 +77,8 @@ class XMLGenerator:
         Parameters
         ----------
         parent : Element or None
-            The parent element to which the new element will be appended. If None, the element is not appended to any parent.
+            The parent element to which the new element will be appended. If None, the
+            element is not appended to any parent.
         namespace : str
             The XML namespace for the element.
         element_name : str

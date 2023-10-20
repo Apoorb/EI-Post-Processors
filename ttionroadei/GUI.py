@@ -22,14 +22,18 @@ from ttionroadei.csvxmlpostprc.xmlgen import XMLGenerator
 
 class PostProcessorGUI:
     """
-    PostProcessorGUI is a class for setting up and running the post-processing of emissions data from MOVES.
-
-    This class is responsible for configuring the post-processing parameters and generating detailed CSV files, aggregated and pivoted CSV files, and XML files for emissions data based on user input and pre-defined settings. It provides methods for setting paths, specifying input options, saving parameters, and running the post-processing workflow.
+    PostProcessorGUI is a class for setting up and running the post-processing of emissions
+    data from MOVES. This class is responsible for configuring the post-processing
+    parameters and generating detailed CSV files, aggregated and pivoted CSV files, and
+    XML files for emissions data based on user input and pre-defined settings. It
+    provides methods for setting paths, specifying input options, saving parameters,
+    and running the post-processing workflow.
 
     Parameters
     ----------
     ei_base_dir : str or None, optional
-        The base directory for MOVES input data. If not provided, the class will use default settings.
+        The base directory for MOVES input data. If not provided, the class will use
+        default settings.
     log_dir : str, optional
         The directory for log files. Default is "./logs".
 

@@ -295,7 +295,8 @@ class CsvXmlGen:
         """
         Perform activity quality control.
 
-        This method is responsible for performing quality control checks on the activity data used in the CsvXmlGen class.
+        This method is responsible for performing quality control checks on the activity
+        data used in the CsvXmlGen class.
 
         Returns
         -------
@@ -309,7 +310,8 @@ class CsvXmlGen:
         """
         Perform emissions quality control.
 
-        This method is responsible for performing quality control checks on the emissions data used in the CsvXmlGen class.
+        This method is responsible for performing quality control checks on the emissions
+        data used in the CsvXmlGen class.
 
         Returns
         -------
@@ -323,7 +325,8 @@ class CsvXmlGen:
         """
         Perform output quality control.
 
-        This method is responsible for performing quality control checks on the output data used in the CsvXmlGen class.
+        This method is responsible for performing quality control checks on the output
+        data used in the CsvXmlGen class.
 
         Returns
         -------
@@ -418,7 +421,8 @@ class CsvXmlGen:
         Parameters
         ----------
         dev_w_mvs3 : bool, optional
-            A flag indicating whether the data is from MOVES3 or MOVES4 utilities (default is True).
+            A flag indicating whether the data is from MOVES3 or MOVES4 utilities
+            (default is True).
 
         Returns
         -------
@@ -557,7 +561,8 @@ class CsvXmlGen:
         """
         Generate aggregated data for NEI SCCs (Source Classification Codes).
 
-        This method aggregates detailed activity and emissions data to NEI SCCs for specific parameters.
+        This method aggregates detailed activity and emissions data to NEI SCCs for
+        specific parameters.
 
         Parameters
         ----------

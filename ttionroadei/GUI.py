@@ -639,7 +639,7 @@ class PostProcessorGUI:
         xml_pols = self.xml_pollutant_codes_selected
         xmlscc_df = csvxmlgen.aggsccgen(
             act_emis_dict=act_emis_dict,
-            nei_pols=xml_pols,
+            xml_pols_selected=xml_pols,
             xml_year_selected=self.xml_year_selected,
             xml_season_selected=self.xml_season_selected,
             xml_daytype_selected=self.xml_daytype_selected,

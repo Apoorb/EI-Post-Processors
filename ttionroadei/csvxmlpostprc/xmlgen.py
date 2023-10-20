@@ -156,11 +156,8 @@ def xmlgen(xml_data):
     xml_string = etree.tostring(
         root, pretty_print=True, encoding="utf-8", xml_declaration=True
     ).decode()
-
-    print(xml_string)
-    output_file = "output.xml"
-    with open(output_file, "w", encoding="utf-8") as file:
-        file.write(xml_string)
+    # print(xml_string)
+    return xml_string
 
 
 if __name__ == "__main__":

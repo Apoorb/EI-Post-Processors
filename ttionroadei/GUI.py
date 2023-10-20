@@ -415,6 +415,7 @@ class PostProcessorGUI:
         emis_out_fi = self.out_dir_pp.joinpath("emissionDetailed.csv")
         xmlscc_csv_out_fi = self.out_dir_pp.joinpath("xmlSCCStagingTable.csv")
         agg_tab_out_fi = self.out_dir_pp.joinpath("aggregateTable.xlsx")
+
         if self.gendetailedcsvfiles:
             self.logger.info(
                 msg=f"Processing and combining main module data to develop detailed data..."
@@ -477,7 +478,11 @@ class PostProcessorGUI:
                 & (df.dayType == self.xml_daytype_selected)
             ]
             self.xml["Payload"]["Location"] = xmlscc_df_filt
-            xmlgen.xmlgen(self.xml)
+            xml_fi_name = f"{self.area_selected}{self.xml_year_selected}{self.xml_season_selected}{self.xml_daytype_selected}.xml"
+            xmlscc_out_fi = self.out_dir_pp.joinpath(xml_fi_name)
+            xml_string = xmlgen.xmlgen(self.xml)
+            with open(xmlscc_out_fi, "w", encoding="utf-8") as file:
+                file.write(xml_string)
 
 
 if __name__ == "__main__":

@@ -593,6 +593,132 @@ class PostProcessorGUI:
         """
         ...
 
+    def process_detailed_csv(self, csvxmlgen, act_out_fi, emis_out_fi):
+        """
+        Process and combine main module data to develop detailed data and save it as CSV files.
+
+        Parameters
+        ----------
+        csvxmlgen : CsvXmlGen
+            An instance of the CsvXmlGen class for generating CSV and XML files.
+        act_out_fi : str
+            Path to the output file for detailed activity data.
+        emis_out_fi : str
+            Path to the output file for detailed emission data.
+
+        Returns
+        -------
+        None
+        """
+        self.logger.info(
+            "Processing and combining main module data to develop detailed data..."
+        )
+        act_emis_dict = csvxmlgen.detailedcsvgen()
+        act_emis_dict["act"].to_csv(act_out_fi, index=False)
+        act_emis_dict["emis"].to_csv(emis_out_fi, index=False)
+        self.logger.info(
+            f"Saved detailed activity and emission data to {str(act_out_fi)} and {str(emis_out_fi)}, respectively."
+        )
+
+    def load_detailed_csv_data(self):
+        """
+        Load detailed activity and emission data from CSV files.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        dict
+            A dictionary containing detailed activity and emission data.
+        """
+        try:
+            act_emis_dict = {
+                "act": pd.read_csv(self.out_dir_pp.joinpath("activityDetailed.csv")),
+                "emis": pd.read_csv(self.out_dir_pp.joinpath("emissionDetailed.csv")),
+            }
+        except:
+            self.logger.error("Generate detailed CSV files to prepare aggregate files!")
+            raise
+        return act_emis_dict
+
+    def process_aggregate_tables(self, csvxmlgen, act_emis_dict, agg_tab_out_fi):
+        """
+        Aggregate detailed activity data to develop aggregate tables and save them as Excel files.
+
+        Parameters
+        ----------
+        csvxmlgen : CsvXmlGen
+            An instance of the CsvXmlGen class for generating CSV and XML files.
+        act_emis_dict : dict
+            A dictionary containing detailed activity and emission data.
+        agg_tab_out_fi : str
+            Path to the output file for aggregate tables.
+
+        Returns
+        -------
+        None
+        """
+        self.logger.info(
+            "Aggregating detailed activity to develop aggregate tables table..."
+        )
+        agg_act_emis_dict = csvxmlgen.aggxlsxgen(act_emis_dict)
+        with pd.ExcelWriter(agg_tab_out_fi, engine="xlsxwriter") as writer:
+            for key, val in agg_act_emis_dict.items():
+                val["emis"].to_excel(writer, sheet_name=f"{key}_emis", index=False)
+                val["act"].to_excel(writer, sheet_name=f"{key}_act", index=False)
+        self.logger.info(f"Saved aggregate tables to {str(agg_tab_out_fi)}.")
+
+    def process_xml_files(self, csvxmlgen, act_emis_dict, xmlscc_csv_out_fi):
+        """
+        Process and combine detailed activity and emission data to develop XML staging table and save it as a CSV file.
+        Then, use the staging table to generate an XML file.
+
+        Parameters
+        ----------
+        csvxmlgen : CsvXmlGen
+            An instance of the CsvXmlGen class for generating CSV and XML files.
+        act_emis_dict : dict
+            A dictionary containing detailed activity and emission data.
+        xmlscc_csv_out_fi : str
+            Path to the output file for the XML staging table in CSV format.
+
+        Returns
+        -------
+        None
+        """
+        self.logger.info(
+            "Processing and combining detailed activity and emission data to develop XML staging table..."
+        )
+        xml_pols = self.xml_pollutant_codes_selected
+        xmlscc_df = csvxmlgen.aggsccgen(
+            act_emis_dict=act_emis_dict,
+            nei_pols=xml_pols,
+            xml_year_selected=self.xml_year_selected,
+            xml_season_selected=self.xml_season_selected,
+            xml_daytype_selected=self.xml_daytype_selected,
+        )
+        xmlscc_df.to_csv(xmlscc_csv_out_fi, index=False)
+        self.logger.info(f"Saved XML staging table to {str(xmlscc_csv_out_fi)}.")
+
+        self.logger.info("Using Metadata and XML staging table to develop XML...")
+        xmlscc_df = pd.read_csv(xmlscc_csv_out_fi)
+        xmlscc_df_filt = xmlscc_df.loc[
+            lambda df: (df.year == self.xml_year_selected)
+            & (df.season == self.xml_season_selected)
+            & (df.dayType == self.xml_daytype_selected)
+        ]
+        self.xml_data["Payload"]["Location"] = xmlscc_df_filt
+        xml_fi_name = f"{self.area_selected}{self.xml_year_selected}{self.xml_season_selected}{self.xml_daytype_selected}.xml"
+        xmlscc_out_fi = self.out_dir_pp.joinpath(xml_fi_name)
+        xmlgen_obj = XMLGenerator(self.xml_data)
+        tree = xmlgen_obj.generate_xml()
+        tree.write(
+            xmlscc_out_fi, pretty_print=True, xml_declaration=True, encoding="utf-8"
+        )
+        self.logger.info(f"Saved XML to {str(xmlscc_out_fi)}.")
+
     def run_pp(self):
         """
         Execute the post-processing workflow, including generating CSV and XML files.
@@ -610,91 +736,23 @@ class PostProcessorGUI:
         None
         """
         csvxmlgen = CsvXmlGen(self)
-        csvxmlgen.paramqc()
         act_out_fi = self.out_dir_pp.joinpath("activityDetailed.csv")
         emis_out_fi = self.out_dir_pp.joinpath("emissionDetailed.csv")
         xmlscc_csv_out_fi = self.out_dir_pp.joinpath("xmlSCCStagingTable.csv")
         agg_tab_out_fi = self.out_dir_pp.joinpath("aggregateTable.xlsx")
 
         if self.gendetailedcsvfiles:
-            self.logger.info(
-                msg=f"Processing and combining main module data to develop detailed data..."
-            )
-            act_emis_dict = csvxmlgen.detailedcsvgen()
-            act_emis_dict["act"].to_csv(act_out_fi, index=False)
-            act_emis_dict["emis"].to_csv(emis_out_fi, index=False)
-            self.logger.info(
-                msg=f"Saved detailed activity and emission data to {str(act_out_fi)} and {str(emis_out_fi)}, respectively."
-            )
+            self.process_detailed_csv(csvxmlgen, act_out_fi, emis_out_fi)
         else:
-            try:
-                act_emis_dict = {
-                    "act": pd.read_csv(
-                        self.out_dir_pp.joinpath("activityDetailed.csv")
-                    ),
-                    "emis": pd.read_csv(
-                        self.out_dir_pp.joinpath("emissionDetailed.csv")
-                    ),
-                }
-            except:
-                self.logger.error(
-                    "Generate detailed csv files to prepare aggregate files!"
-                )
-                raise
-        if self.genaggpivfiles:
-            self.logger.info(
-                msg=f"Aggregating detailed activity to develop aggregate tables table..."
-            )
-            agg_act_emis_dict = csvxmlgen.aggxlsxgen(act_emis_dict)
-            with pd.ExcelWriter(agg_tab_out_fi, engine="xlsxwriter") as writer:
-                for key, val in agg_act_emis_dict.items():
-                    val["emis"].to_excel(writer, sheet_name=f"{key}_emis", index=False)
-                    val["act"].to_excel(writer, sheet_name=f"{key}_act", index=False)
-            self.logger.info(msg=f"Saved aggregate tables to {str(agg_tab_out_fi)}.")
-        if self.genxmlfile:
-            # ToDo need user input for choosing year, season, daytype
-            self.logger.info(
-                msg=f"Processing and combining detailed activity and emission data to develop XML staging table..."
-            )
-            xml_pols = self.xml_pollutant_codes_selected
-            xmlscc_df = csvxmlgen.aggsccgen(
-                act_emis_dict=act_emis_dict,
-                nei_pols=xml_pols,
-                xml_year_selected=self.xml_year_selected,
-                xml_season_selected=self.xml_season_selected,
-                xml_daytype_selected=self.xml_daytype_selected,
-            )
-            xmlscc_df.to_csv(
-                self.out_dir_pp.joinpath("xmlSCCStagingTable.csv"),
-                index=False,
-            )
-            self.logger.info(
-                msg=f"Saved XML staging table to {str(xmlscc_csv_out_fi)}."
-            )
+            act_emis_dict = self.load_detailed_csv_data()
 
-            self.logger.info(
-                msg=f"Using Metadata and XML staging table to develop XML..."
-            )
-            xmlscc_df = pd.read_csv(
-                xmlscc_csv_out_fi,
-            )
-            xmlscc_df_filt = xmlscc_df.loc[
-                lambda df: (df.year == self.xml_year_selected)
-                & (df.season == self.xml_season_selected)
-                & (df.dayType == self.xml_daytype_selected)
-            ]
-            self.xml_data["Payload"]["Location"] = xmlscc_df_filt
-            xml_fi_name = f"{self.area_selected}{self.xml_year_selected}{self.xml_season_selected}{self.xml_daytype_selected}.xml"
-            xmlscc_out_fi = self.out_dir_pp.joinpath(xml_fi_name)
-            xmlgen_obj = XMLGenerator(self.xml_data)
-            tree = xmlgen_obj.generate_xml()
-            tree.write(
-                xmlscc_out_fi, pretty_print=True, xml_declaration=True, encoding="utf-8"
-            )
-            self.logger.info(msg=f"Saved XML to {str(xmlscc_out_fi)}.")
-            self.logger.info(
-                ".........................Post-processing ended........................."
-            )
+        if self.genaggpivfiles:
+            self.process_aggregate_tables(csvxmlgen, act_emis_dict, agg_tab_out_fi)
+
+        if self.genxmlfile:
+            self.process_xml_files(csvxmlgen, act_emis_dict, xmlscc_csv_out_fi)
+
+        self.logger.info("Post-processing ended")
 
 
 if __name__ == "__main__":

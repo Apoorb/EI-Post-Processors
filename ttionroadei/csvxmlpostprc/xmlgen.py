@@ -1,8 +1,67 @@
+"""
+XML generation code.
+"""
 from lxml import etree
 
 
 class XMLGenerator:
+    """
+    XMLGenerator class for generating XML documents using the lxml library.
+
+    Parameters
+    ----------
+    xml_data : dict
+        A dictionary containing the data for generating the XML document.
+
+    Attributes
+    ----------
+    xml_data : dict
+        The input data for creating the XML document.
+    namespace : dict
+        A dictionary that defines XML namespaces used in the document.
+
+    Methods
+    -------
+    create_element(parent, namespace, element_name, text=None)
+        Create an XML element with an optional text value and append it to the parent element.
+
+    create_header_element()
+        Create the XML header element based on the provided data.
+
+    create_payload_element()
+        Create the XML payload element based on the provided data.
+
+    create_location_emissions_process_element(data, SCC)
+        Create an XML element for a location emissions process based on the provided data.
+
+    generate_xml()
+        Generate the complete XML document based on the input data and return it as an ElementTree object.
+
+    Example Usage
+    -------------
+    xml_data = {
+        "Header": {
+            # Define your header data here
+        },
+        "Payload": {
+            # Define your payload data here
+        },
+    }
+
+    xml_generator = XMLGenerator(xml_data)
+    generated_xml = xml_generator.generate_xml()
+    print(generated_xml)
+    """
+
     def __init__(self, xml_data):
+        """
+        Initialize an XMLGenerator instance.
+
+        Parameters
+        ----------
+        xml_data : dict
+            A dictionary containing the data for generating the XML document.
+        """
         self.xml_data = xml_data
         self.namespace = {
             "hdr": "http://www.exchangenetwork.net/schema/header/2",
@@ -11,6 +70,25 @@ class XMLGenerator:
         }
 
     def create_element(self, parent, namespace, element_name, text=None):
+        """
+        Create an XML element and append it to the parent element if provided.
+
+        Parameters
+        ----------
+        parent : Element or None
+            The parent element to which the new element will be appended. If None, the element is not appended to any parent.
+        namespace : str
+            The XML namespace for the element.
+        element_name : str
+            The name of the element to be created.
+        text : str or None, optional
+            The text value to be set for the element. Default is None.
+
+        Returns
+        -------
+        Element
+            The created XML element.
+        """
         element = etree.Element(etree.QName(namespace, element_name))
         if text is not None:
             element.text = text
@@ -19,6 +97,14 @@ class XMLGenerator:
         return element
 
     def create_header_element(self):
+        """
+        Create the XML header element based on the provided data.
+
+        Returns
+        -------
+        Element
+            The XML header element.
+        """
         header = self.create_element(None, self.namespace["hdr"], "Header")
 
         header_elements = {
@@ -52,6 +138,14 @@ class XMLGenerator:
         return header
 
     def create_payload_element(self):
+        """
+        Create the XML payload element based on the provided data.
+
+        Returns
+        -------
+        Element
+            The XML payload element.
+        """
         payload = self.create_element(None, self.namespace["hdr"], "Payload")
         cers = self.create_element(payload, self.namespace["cer"], "CERS")
 
@@ -85,6 +179,21 @@ class XMLGenerator:
         return payload
 
     def create_location_emissions_process_element(self, data, SCC):
+        """
+        Create an XML element for a location emissions process based on the provided data.
+
+        Parameters
+        ----------
+        data : DataFrame
+            The data containing emissions process information.
+        SCC : str
+            The Source Classification Code.
+
+        Returns
+        -------
+        Element
+            The XML element for the location emissions process.
+        """
         location_emissions_process = self.create_element(
             None, self.namespace["cer"], "LocationEmissionsProcess"
         )
@@ -158,6 +267,14 @@ class XMLGenerator:
         return location_emissions_process
 
     def generate_xml(self):
+        """
+        Generate the complete XML document based on the input data.
+
+        Returns
+        -------
+        ElementTree
+            The complete XML document as an ElementTree object.
+        """
         root = etree.Element(
             etree.QName(self.namespace["hdr"], "Document"), nsmap=self.namespace
         )

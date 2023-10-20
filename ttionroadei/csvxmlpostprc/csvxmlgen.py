@@ -10,6 +10,106 @@ from ttionroadei.utils import _add_handler, settings
 
 
 class CsvXmlGen:
+    """
+    CsvXmlGen is a class for generating detailed and summarized CSV and XML files for emissions data.
+
+    This class is responsible for processing emissions data and activity data, and
+    aggregating them into CSV and XML files. It provides methods for performing data
+    quality checks, adding labels to the data, generating detailed CSV files, aggregating
+    data, and creating XML files for various scenarios.
+
+    Parameters
+    ----------
+    gui_obj : object
+        An instance of the PostProcessorGUI class, which provides input parameters and
+        data sources for post-processing.
+
+    Attributes
+    ----------
+    logger : logging.Logger
+        A logger for recording information and errors during the data processing.
+    settings : dict
+        Configuration settings for data processing.
+    labels : dict
+        Labels for various data categories.
+    area_selected : list
+        The selected analysis areas for data processing.
+    years_selected : list
+        The selected years for data processing.
+    seasons_selected : list
+        The selected seasons for data processing.
+    daytypes_selected : list
+        The selected day types for data processing.
+    FIPSs_selected : list
+        The selected FIPS codes for data processing.
+    outpollutants : pd.DataFrame
+        DataFrame containing selected pollutant codes for data processing.
+    eis_selected : list
+        The selected emissions data categories.
+    act_fis : dict
+        File paths for off-road activity data.
+    ei_fis : dict
+        File paths for emissions data.
+    output_units : str
+        The output units for emissions data.
+    conversion_factor : pd.DataFrame
+        Conversion factors for emissions data units.
+    area_rdtype_df : pd.DataFrame
+        Dataframe containing area-specific road type mapping data.
+    sccfun : function
+        A lambda function for generating SCC (Source Classification Code) from data.
+    sutFtfun : function
+        A lambda function for generating SUT-FT labels from data.
+
+    Methods
+    -------
+    paramqc()
+        Perform parameter quality checks to ensure data processing parameters are valid.
+
+    detailedcsvgen(dev_w_mvs3=True)
+        Generate detailed CSV files from activity and emissions data.
+
+    aggxlsxgen(act_emis_dict)
+        Aggregate detailed activity and emissions data and generate summary Excel files.
+
+    aggsccgen(
+        act_emis_dict,
+        nei_pols,
+        xml_year_selected,
+        xml_season_selected,
+        xml_daytype_selected,
+    )
+        Aggregate emissions data to NEI SCCs and return the result as a DataFrame.
+
+    _emisprc()
+        Process emissions data and filter it based on selected parameters.
+
+    _actprc()
+        Process emissions data and filter it based on selected parameters.
+
+    act_add_labs(df_)
+        Add labels to activity data and return the result as a DataFrame.
+
+    emis_add_labs(df_)
+        Add labels to emissions data and return the result as a DataFrame.
+
+    Example Usage
+    -------------
+    # Create an instance of CsvXmlGen
+    csv_xml_gen = CsvXmlGen(gui_obj)
+
+    # Generate detailed CSV files
+    detailed_data = csv_xml_gen.detailedcsvgen()
+
+    # Aggregate data and generate summary Excel files
+    aggregated_data = csv_xml_gen.aggxlsxgen(detailed_data)
+
+    # Aggregate emissions data to NEI SCCs
+    nei_scc_data = csv_xml_gen.aggsccgen(
+        detailed_data, nei_pols, xml_year_selected, xml_season_selected, xml_daytype_selected
+    )
+    """
+
     def __init__(self, gui_obj):
         self.logger = lg.getLogger(name=__file__)
         self.logger = _add_handler(dir=gui_obj.log_dir, logger=self.logger)
@@ -48,6 +148,25 @@ class CsvXmlGen:
         ...
 
     def _emisprc(self, dev_w_mvs3):
+        """
+        Process emissions data and filter it based on selected parameters.
+
+        This method processes emissions data, applies filters, and formats it for
+        further processing. It reads emissions data files for different EI
+        categories, filters them based on selected parameters such as FIPS codes,
+        and renames columns for consistency.
+
+        Parameters
+        ----------
+        dev_w_mvs3 : bool
+            A flag indicating whether the data is from MOVES3 or MOVES4 utilities.
+
+        Returns
+        -------
+        pd.DataFrame
+            Processed emissions data containing pollutant emissions by category and
+            attributes.
+        """
         emis_filter_rename_dict = self.settings["emis_rename"]
         emis_id_cols = set(self.settings["csvxml_ei"]["idx"]) - set(
             ["pollutantCode", "actTypeABB"]
@@ -111,6 +230,24 @@ class CsvXmlGen:
         return _emis
 
     def _actprc(self, dev_w_mvs3):
+        """
+        Process off-road activity data and filter it based on selected parameters.
+
+        This method processes off-road activity data, applies filters, and formats it
+        for further processing. It reads activity data files, filters them based on
+        selected parameters such as FIPS codes, and renames columns for consistency.
+
+        Parameters
+        ----------
+        dev_w_mvs3 : bool
+            A flag indicating whether the data is from MOVES3 or MOVES4 utilities.
+
+        Returns
+        -------
+        pd.DataFrame
+            Processed off-road activity data containing activity values by category
+            and attributes.
+        """
         act_filter_rename_dict = self.settings["act_rename"]
         act_id_cols = set(self.settings["csvxml_act"]["idx"]) - set(
             ["actTypeABB", "activityunits"]
@@ -155,16 +292,43 @@ class CsvXmlGen:
         return _act
 
     def _actqc(self):
+        """
+        Perform activity quality control.
+
+        This method is responsible for performing quality control checks on the activity data used in the CsvXmlGen class.
+
+        Returns
+        -------
+        None
+        """
         # ToDo: Add test function:
         set(self.settings["csvxml_act"]).symmetric_difference(set(self.act_df.columns))
         ...
 
     def _emisqc(self):
+        """
+        Perform emissions quality control.
+
+        This method is responsible for performing quality control checks on the emissions data used in the CsvXmlGen class.
+
+        Returns
+        -------
+        None
+        """
         # ToDo: Add test function:
         set(self.settings["csvxml_ei"]).symmetric_difference(set(self.emis_df.columns))
         ...
 
     def _outputsqc(self):
+        """
+        Perform output quality control.
+
+        This method is responsible for performing quality control checks on the output data used in the CsvXmlGen class.
+
+        Returns
+        -------
+        None
+        """
         # ToDo: Add test function:
         set(self.settings["csvxml_act"]).symmetric_difference(set(self.act_df.columns))
         set(self.settings["csvxml_ei"]).symmetric_difference(set(self.emis_df.columns))
@@ -172,6 +336,22 @@ class CsvXmlGen:
         ...
 
     def act_add_labs(self, df_):
+        """
+        Add labels and merge data in the activity data.
+
+        This method adds labels to the activity data and merges it with other relevant
+        data, such as area labels, road type labels, and more.
+
+        Parameters
+        ----------
+        df_ : pd.DataFrame
+            The activity data to which labels are added.
+
+        Returns
+        -------
+        pd.DataFrame
+            Activity data with added labels and merged data.
+        """
         columns = [
             item for sublist in self.settings["csvxml_act"].values() for item in sublist
         ]
@@ -190,6 +370,22 @@ class CsvXmlGen:
         )
 
     def emis_add_labs(self, df_):
+        """
+        Add labels and merge data in the emissions data.
+
+        This method adds labels to the emissions data and merges it with other relevant
+        data, such as area labels, road type labels, pollutant labels, and more.
+
+        Parameters
+        ----------
+        df_ : pd.DataFrame
+            The emissions data to which labels are added.
+
+        Returns
+        -------
+        pd.DataFrame
+            Emissions data with added labels and merged data.
+        """
         columns = [
             item for sublist in self.settings["csvxml_ei"].values() for item in sublist
         ]
@@ -213,6 +409,22 @@ class CsvXmlGen:
         )
 
     def detailedcsvgen(self, dev_w_mvs3=True):
+        """
+        Generate detailed CSV files for activity and emissions data.
+
+        This method generates detailed CSV files for activity and emissions data,
+        applying various processing steps and adding labels.
+
+        Parameters
+        ----------
+        dev_w_mvs3 : bool, optional
+            A flag indicating whether the data is from MOVES3 or MOVES4 utilities (default is True).
+
+        Returns
+        -------
+        dict
+            A dictionary containing detailed CSV data for activities and emissions.
+        """
         self.logger.info(msg="ETL activity data from the main modules...")
         act_df = self._actprc(dev_w_mvs3=dev_w_mvs3)
         if dev_w_mvs3:
@@ -236,6 +448,21 @@ class CsvXmlGen:
         return {"act": act_out, "emis": emis_out}
 
     def aggxlsxgen(self, act_emis_dict):
+        """
+        Generate aggregated Excel files for activity and emissions data. This method
+        aggregates detailed activity and emissions data and generates Excel files with
+        aggregated data.
+
+        Parameters
+        ----------
+        act_emis_dict : dict
+            A dictionary containing detailed activity and emissions data.
+
+        Returns
+        -------
+        dict
+            A dictionary containing aggregated Excel data for activities and emissions.
+        """
         self.logger.info(msg="Aggregating detailed activity and emission data...")
         emis_scenario_cols = [
             "EIType",
@@ -327,6 +554,29 @@ class CsvXmlGen:
         xml_season_selected,
         xml_daytype_selected,
     ):
+        """
+        Generate aggregated data for NEI SCCs (Source Classification Codes).
+
+        This method aggregates detailed activity and emissions data to NEI SCCs for specific parameters.
+
+        Parameters
+        ----------
+        act_emis_dict : dict
+            A dictionary containing detailed activity and emissions data.
+        nei_pols : list
+            A list of pollutant codes for NEI.
+        xml_year_selected : int
+            The selected year for NEI data.
+        xml_season_selected : int
+            The selected season for NEI data.
+        xml_daytype_selected : int
+            The selected day type for NEI data.
+
+        Returns
+        -------
+        pd.DataFrame
+            Aggregated data for NEI SCCs (Source Classification Codes).
+        """
         self.logger.info(
             msg="Aggregating detailed activity and emission data to NEI SCCs."
         )

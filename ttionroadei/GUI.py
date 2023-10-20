@@ -21,6 +21,83 @@ from ttionroadei.csvxmlpostprc.xmlgen import XMLGenerator
 
 
 class PostProcessorGUI:
+    """
+    PostProcessorGUI is a class for setting up and running the post-processing of emissions data from MOVES.
+
+    This class is responsible for configuring the post-processing parameters and generating detailed CSV files, aggregated and pivoted CSV files, and XML files for emissions data based on user input and pre-defined settings. It provides methods for setting paths, specifying input options, saving parameters, and running the post-processing workflow.
+
+    Parameters
+    ----------
+    ei_base_dir : str or None, optional
+        The base directory for MOVES input data. If not provided, the class will use default settings.
+    log_dir : str, optional
+        The directory for log files. Default is "./logs".
+
+    Attributes
+    ----------
+    log_dir : str
+        The directory for log files.
+    logger : logging.Logger
+        The logger for recording information and errors during the post-processing.
+    labels : dict
+        A dictionary containing labels for emissions data.
+    ei_base_dir : str
+        The base directory for MOVES input data.
+    out_dir : str
+        The output directory for post-processed data.
+    out_dir_pp : pathlib.Path
+        The output directory for post-processed data as a Path object.
+    ei_fis_EMS : dict
+        A dictionary containing file paths for different emissions data categories.
+    ei_fis_RF : dict
+        A dictionary containing file paths for roadway fractions data.
+    ei_fis_TEC : dict
+        A dictionary containing file paths for total emissions data.
+    transvmtvht_fi : str
+        The file path for VMT and VHT data.
+    offroadact_dir : str
+        The directory containing off-road activity data.
+    act_fis : dict
+        A dictionary containing file paths for different off-road activity data categories.
+    fi_temp_tdm_hpms_rdtype : str
+        The file path for road type mapping data.
+    output_yaml_file : str
+        The file path for saving post-processing parameters as a YAML file.
+    onroadei_dir : str
+        The directory containing on-road emissions data.
+
+    Methods
+    -------
+    set_paths()
+        Set the file and directory paths for input and output data.
+    provide_csv_options()
+        Specify the input options for post-processing of CSV files.
+    set_csv_param()
+        Set the post-processing parameters for CSV file generation.
+    provide_xml_options()
+        Specify the input options for post-processing of XML files.
+    set_xml_param()
+        Set the post-processing parameters for XML file generation.
+    save_params()
+        Save the post-processing parameters as a YAML file.
+    check_params()
+        Check the validity of the provided parameters.
+    run_pp()
+        Execute the post-processing workflow, including generating CSV and XML files.
+
+    Example Usage
+    -------------
+    ppgui = PostProcessorGUI()
+    ppgui.set_paths()
+    ppgui.provide_csv_options()
+    ppgui.set_csv_param()
+    ppgui.provide_xml_options()
+    ppgui.set_xml_param()
+    ppgui.check_params()
+    ppgui.save_params()
+    ppgui.run_pp()
+    """
+
     def __init__(self, ei_base_dir=None, log_dir=r"./logs"):
         ##### Paths ####################################################################
         # TODO: Change to MOVES 4 utilities structure. I am using old utilities. I am
@@ -89,6 +166,22 @@ class PostProcessorGUI:
         self.xml_data = {"Header": {}, "Payload": {}}
 
     def set_paths(self):
+        """
+        Set the file and directory paths for input and output data.
+
+        This method initializes paths to directories and files used in the
+        post-processing workflow, such as input data directories and output directories.
+        It also configures the logging directory and logger for recording information
+        and errors.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
         self.ei_dir = Path(
             r"E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - "
             r"FY2022_HGB2026_"
@@ -139,6 +232,7 @@ class PostProcessorGUI:
         self.out_dir_pp.mkdir(exist_ok=True)
 
     def _get_roadtype(self):
+        """Retrieve and process road type data from a mapping file."""
         # TODO: add error checking to see if the area exisits in the mapping file.
         self.use_tdm_area_rdtype = True
         self.use_hpms_area_rdtype = False
@@ -185,6 +279,21 @@ class PostProcessorGUI:
         ).reset_index(drop=True)
 
     def provide_csv_options(self):
+        """
+        Specify the input options for post-processing of CSV files.
+
+        This method allows the developer to specify options for post-processing CSV files,
+        including the choice of emissions data categories, analysis areas, counties,
+        years, seasons, day types, and pollutant codes.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
         # 1. Based on the inventory type chosen for the GUI for the emission calc (
         # previous module),
         # give users dropdown.
@@ -237,7 +346,7 @@ class PostProcessorGUI:
         self.daytype_dropdown = [
             "fr",
         ]
-        self.pollutant_codes_dropdown = ["CO", "NOx", "PM10"]
+        self.pollutant_codes_dropdown = ["CO", "NOx", "PM10", "TEC", "PM25"]
         # ToDo: Need a mapping file for pollutant codes to pollutants
         # FixMe: How are me going to get this inputs?
         #   - NEI pollutants?
@@ -247,6 +356,7 @@ class PostProcessorGUI:
             "CO": [2],
             "NOx": [3],
             "PM10": [100, 106, 107],
+            "PM25": [110, 116, 117],
             "TEC": [91],  # Should always be selected for TEC EIs
         }
         # ToDo: Choose from the following options
@@ -280,6 +390,21 @@ class PostProcessorGUI:
         # TODO: Use MOVES/ CG's units names
 
     def set_csv_param(self):
+        """
+        Set the post-processing parameters for CSV file generation.
+
+        This method sets the post-processing parameters for generating detailed CSV
+        files based on the specified options. It includes the selection of emissions
+        data categories, areas, counties, years, seasons, day types, and pollutant codes.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
         self.eis_selected = ["EMS", "TEC"]  #  "RF",
         self.area_selected = "HGB"
         self.FIPSs_selected = [
@@ -292,7 +417,7 @@ class PostProcessorGUI:
         ]
         self.seasons_selected = ("p1",)
         self.daytypes_selected = ("fr",)
-        self.pollutant_codes_selected = ["CO", "NOx", "PM10"]  # , "TEC"
+        self.pollutant_codes_selected = ["CO", "NOx", "PM10", "PM25"]  # , "TEC"
         if "TEC" in self.eis_selected:
             if "TEC" not in self.pollutant_codes_selected:
                 self.pollutant_codes_selected.append("TEC")
@@ -325,13 +450,43 @@ class PostProcessorGUI:
         # c) XML file
 
     def provide_xml_options(self):
-        self.xml_pollutant_codes_dropdown = ["CO", "NOx", "PM10"]
+        """
+        Specify the input options for post-processing of XML files.
+
+        This method allows the user to specify options for post-processing XML files,
+        including the choice of pollutant codes, years, seasons, and day types for
+        generating the XML output.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        self.xml_pollutant_codes_dropdown = ["CO", "NOx", "PM10", "PM25"]
         self.xml_year_dropdown = self.years_selected
         self.xml_season_dropdown = self.seasons_selected
         self.xml_daytype_dropdown = self.daytypes_selected
 
     def set_xml_param(self):
-        self.xml_pollutant_codes_selected = ["CO", "NOx", "PM10"]
+        """
+        Set the post-processing parameters for XML file generation.
+
+        This method sets the post-processing parameters for generating XML files based
+        on the specified options. It includes the selection of pollutant codes, years,
+        seasons, day types, and other XML header information.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        self.xml_pollutant_codes_selected = ["CO", "NOx", "PM10", "PM25"]
         self.xml_year_selected = 2026
         self.xml_season_selected = "p1"
         self.xml_daytype_selected = "fr"
@@ -364,6 +519,20 @@ class PostProcessorGUI:
         self.xml_data["Payload"]["CalculationParameterTypeCode"] = "I"
 
     def save_params(self):
+        """
+        Save the post-processing parameters as a YAML file.
+
+        This method saves the post-processing parameters and configuration as a YAML
+        file for future reference and reproducibility.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
         # Define a dictionary to hold all the variables
         self.check_params()
         variables_dict = {
@@ -403,9 +572,39 @@ class PostProcessorGUI:
         self.logger.info(msg=f"Variables saved to {str(self.output_yaml_file)}")
 
     def check_params(self):
+        """
+        Check the validity of the provided parameters.
+
+        This method performs checks to ensure that the provided post-processing
+        parameters are valid and consistent. It helps identify potential issues or
+        errors in the parameter settings.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
         ...
 
     def run_pp(self):
+        """
+        Execute the post-processing workflow, including generating CSV and XML files.
+
+        This method executes the complete post-processing workflow, which includes
+        generating detailed CSV files, aggregated and pivoted CSV files, and XML files
+        for emissions data based on the specified parameters and options.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
         csvxmlgen = CsvXmlGen(self)
         csvxmlgen.paramqc()
         act_out_fi = self.out_dir_pp.joinpath("activityDetailed.csv")

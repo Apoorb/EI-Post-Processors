@@ -21,12 +21,17 @@ pollutant_map_codes_selected:
   - 100
   - 106
   - 107
+  PM25:
+  - 110
+  - 116
+  - 117
   TEC:
   - 91
 xml_pollutant_codes_selected:
 - CO
 - NOx
 - PM10
+- PM25
 input_units:
   mass: grams
   energy: Kilojoules

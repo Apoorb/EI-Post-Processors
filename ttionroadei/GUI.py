@@ -608,7 +608,8 @@ class PostProcessorGUI:
 
         Returns
         -------
-        None
+        dict
+            A dictionary containing detailed activity and emission data.
         """
         self.logger.info(
             "Processing and combining main module data to develop detailed data..."
@@ -619,6 +620,7 @@ class PostProcessorGUI:
         self.logger.info(
             f"Saved detailed activity and emission data to {str(act_out_fi)} and {str(emis_out_fi)}, respectively."
         )
+        return act_emis_dict
 
     def load_detailed_csv_data(self):
         """
@@ -645,7 +647,8 @@ class PostProcessorGUI:
 
     def process_aggregate_tables(self, csvxmlgen, act_emis_dict, agg_tab_out_fi):
         """
-        Aggregate detailed activity data to develop aggregate tables and save them as Excel files.
+        Aggregate detailed activity data to develop aggregate tables and save them as
+        Excel files.
 
         Parameters
         ----------
@@ -672,8 +675,9 @@ class PostProcessorGUI:
 
     def process_xml_files(self, csvxmlgen, act_emis_dict, xmlscc_csv_out_fi):
         """
-        Process and combine detailed activity and emission data to develop XML staging table and save it as a CSV file.
-        Then, use the staging table to generate an XML file.
+        Process and combine detailed activity and emission data to develop XML staging
+        table and save it as a CSV file. Then, use the staging table to generate an XML
+        file.
 
         Parameters
         ----------
@@ -740,9 +744,10 @@ class PostProcessorGUI:
         emis_out_fi = self.out_dir_pp.joinpath("emissionDetailed.csv")
         xmlscc_csv_out_fi = self.out_dir_pp.joinpath("xmlSCCStagingTable.csv")
         agg_tab_out_fi = self.out_dir_pp.joinpath("aggregateTable.xlsx")
-
         if self.gendetailedcsvfiles:
-            self.process_detailed_csv(csvxmlgen, act_out_fi, emis_out_fi)
+            act_emis_dict = self.process_detailed_csv(
+                csvxmlgen, act_out_fi, emis_out_fi
+            )
         else:
             act_emis_dict = self.load_detailed_csv_data()
 

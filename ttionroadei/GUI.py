@@ -17,6 +17,7 @@ from ttionroadei.utils import (
     delete_old_log_files,
 )
 from ttionroadei.csvxmlpostprc.csvxmlgen import CsvXmlGen
+from ttionroadei.csvxmlpostprc import xmlgen
 
 
 class PostProcessorGUI:
@@ -50,8 +51,8 @@ class PostProcessorGUI:
         self.ei_selected = tuple()
         self.area_dropdown = tuple()
         self.area_selected = str
-        self.counties_dropdown = tuple()
-        self.counties_selected = tuple()
+        self.FIPS_dropdown = tuple()
+        self.FIPS_selected = tuple()
         self.year_selected = tuple()
         self.year_dropdown = tuple()
         self.season_dropdown = tuple()
@@ -71,28 +72,20 @@ class PostProcessorGUI:
         self.output_units = dict()
         self.conversion_factor = pd.DataFrame()
 
-        # TODO: Ask the user for XML header details.
+        # TODO: Ask the user for XML Header details.
         self.gendetailedcsvfiles = True
         self.genaggpivfiles = True
         self.genxmlfile = True
         ##### XML Fields ###############################################################
-        self.document_id = ""
-        self.document_title = ""
-        self.author_name = ""
-        self.user_identifier = ""
-        self.organization_name = ""
-        self.program_system_code = ""
-        self.comment = ""
-        self.creation_datetime = ""
-        self.submission_type = "QA"
-        self.data_category = ""
-        self.data_flow_name = ""
-        self.model = ""
-        self.model_version = ""
-        self.submittal_comment = ""
-        if self.genxmlfile:
-            self.which_years = ()
-            self.which_pollutants = ()
+        self.xml_pollutant_codes_dropdown = list()
+        self.xml_year_dropdown = list()
+        self.xml_season_dropdown = list()
+        self.xml_daytype_dropdown = list()
+        self.xml_pollutant_codes_selected = list()
+        self.xml_year_selected = int()
+        self.xml_season_selected = ""
+        self.xml_daytype_selected = ""
+        self.xml = {"Header": {}, "Payload": {}}
 
     def set_paths(self):
         self.ei_dir = Path(
@@ -144,7 +137,7 @@ class PostProcessorGUI:
         self.out_dir_pp = self.out_dir.joinpath("Summary")
         self.out_dir_pp.mkdir(exist_ok=True)
 
-    def provide_options(self):
+    def provide_csv_options(self):
         # 1. Based on the inventory type chosen for the GUI for the emission calc (
         # previous module),
         # give users dropdown.
@@ -180,7 +173,7 @@ class PostProcessorGUI:
         self.ei_dropdown = ["EMS", "RF", "TEC"]
         self.area_dropdown = ["HGB", "TX"]
         # File the associated counties from previous modules.
-        self.counties_dropdown = [
+        self.FIPS_dropdown = [
             48201,
             48039,
             48157,
@@ -240,10 +233,10 @@ class PostProcessorGUI:
         )
         # TODO: Use MOVES/ CG's units names
 
-    def set_param(self):
-        self.ei_selected = ["EMS", "RF", "TEC"]
+    def set_csv_param(self):
+        self.ei_selected = ["EMS", "TEC"]  #  "RF",
         self.area_selected = "HGB"
-        self.counties_selected = [
+        self.FIPS_selected = [
             48201,
             48039,
             48157,
@@ -253,7 +246,10 @@ class PostProcessorGUI:
         ]
         self.season_selected = ("p1",)
         self.daytype_selected = ("fr",)
-        self.pollutant_codes_selected = ["CO", "NOx", "TEC"]
+        self.pollutant_codes_selected = ["CO", "NOx"]  # , "TEC"
+        if "TEC" in self.ei_selected:
+            if "TEC" not in self.pollutant_codes_selected:
+                self.pollutant_codes_selected.append("TEC")
         self.pollutant_map_codes_selected = {
             k: v
             for k, v in self.pollutant_map.items()
@@ -283,6 +279,47 @@ class PostProcessorGUI:
         # b) Aggregated and Pivoted CSV files
         # TODO: Ask the user for the type of aggregation and pivot.
         # c) XML file
+
+    def provide_xml_options(self):
+        self.xml_pollutant_codes_dropdown = set(
+            self.pollutant_codes_nei_selected
+        ) - set(["PM10"])
+        self.xml_year_dropdown = self.year_selected
+        self.xml_season_dropdown = self.season_selected
+        self.xml_daytype_dropdown = self.daytype_selected
+
+    def set_xml_param(self):
+        self.xml_pollutant_codes_selected = set(
+            self.pollutant_codes_nei_selected
+        ) - set(["PM10"])
+        self.xml_year_selected = 2026
+        self.xml_season_selected = "p1"
+        self.xml_daytype_selected = "fr"
+        self.xml["Header"]["id"] = "HGB_20"
+        self.xml["Header"]["AuthorName"] = "Mogwai Turner"
+        self.xml["Header"][
+            "OrganizationName"
+        ] = "Texas Commission on Environmental Quality"
+        self.xml["Header"]["DocumentTitle"] = "EIS"
+        self.xml["Header"]["CreationDateTime"] = "2022-04-22T14:32:31"
+        self.xml["Header"]["Comment"] = (
+            "AERR MOVES 3.0.3-based 2020 annual on-road inventories for 254 Texas Counties"
+            " produced by TTI; SCCs and pollutant codes per EPA 2020 NEI instructions"
+        )
+
+        self.xml["Header"]["DataFlowName"] = "CERS_V2"
+        self.xml["Header"]["Properties"] = {
+            "SubmissionType": "QA",
+            "DataCategory": "Onroad",
+        }
+        self.xml["Payload"]["UserIdentifier"] = "XMTURN02"
+        self.xml["Payload"]["ProgramSystemCode"] = "TXCEQ"
+        self.xml["Payload"]["EmissionsYear"] = f"{self.xml_year_selected}"
+        self.xml["Payload"]["Model"] = "MOVES"
+        self.xml["Payload"]["ModelVersion"] = "MOVES3.0.3"
+        self.xml["Payload"][
+            "SubmittalComment"
+        ] = "AERR MOVES 3.0.3-based 2020 annual on-road inventories for 254 Texas Counties"
 
     def _get_roadtype(self):
         # TODO: add error checking to see if the area exisits in the mapping file.
@@ -336,7 +373,7 @@ class PostProcessorGUI:
         variables_dict = {
             "ei_selected": self.ei_selected,
             "area_selected": self.area_selected,
-            "counties_selected": self.counties_selected,
+            "counties_selected": self.FIPS_selected,
             "year_selected": self.year_selected,
             "season_selected": self.season_selected,
             "daytype_selected": self.daytype_selected,
@@ -374,13 +411,15 @@ class PostProcessorGUI:
     def run_pp(self):
         csvxmlgen = CsvXmlGen(self)
         csvxmlgen.paramqc()
+        act_out_fi = self.out_dir_pp.joinpath("activityDetailed.csv")
+        emis_out_fi = self.out_dir_pp.joinpath("emissionDetailed.csv")
+        xmlscc_csv_out_fi = self.out_dir_pp.joinpath("xmlSCCStagingTable.csv")
+        agg_tab_out_fi = self.out_dir_pp.joinpath("aggregateTable.xlsx")
         if self.gendetailedcsvfiles:
             self.logger.info(
                 msg=f"Processing and combining main module data to develop detailed data..."
             )
             act_emis_dict = csvxmlgen.detailedcsvgen()
-            act_out_fi = self.out_dir_pp.joinpath("activityDetailed.csv")
-            emis_out_fi = self.out_dir_pp.joinpath("emissionDetailed.csv")
             act_emis_dict["act"].to_csv(act_out_fi, index=False)
             act_emis_dict["emis"].to_csv(emis_out_fi, index=False)
             self.logger.info(
@@ -401,8 +440,18 @@ class PostProcessorGUI:
                     "Generate detailed csv files to prepare aggregate files!"
                 )
                 raise
-
         if self.genaggpivfiles:
+            self.logger.info(
+                msg=f"Aggregating detailed activity to develop aggregate tables table..."
+            )
+            agg_act_emis_dict = csvxmlgen.aggxlsxgen(act_emis_dict)
+            with pd.ExcelWriter(agg_tab_out_fi, engine="xlsxwriter") as writer:
+                for key, val in agg_act_emis_dict.items():
+                    val["emis"].to_excel(writer, sheet_name=f"{key}_emis", index=False)
+                    val["act"].to_excel(writer, sheet_name=f"{key}_act", index=False)
+            self.logger.info(msg=f"Saved aggregate tables to {str(agg_tab_out_fi)}.")
+        if self.genxmlfile:
+            # ToDo need user input for choosing year, season, daytype
             self.logger.info(
                 msg=f"Processing and combining detailed activity and emission data to develop XML staging table..."
             )
@@ -411,7 +460,6 @@ class PostProcessorGUI:
                 act_emis_dict=act_emis_dict,
                 nei_pols=nei_pols,
             )
-            xmlscc_csv_out_fi = self.out_dir_pp.joinpath("xmlSCCStagingTable.csv")
             xmlscc_df.to_csv(
                 self.out_dir_pp.joinpath("xmlSCCStagingTable.csv"),
                 index=False,
@@ -420,30 +468,25 @@ class PostProcessorGUI:
                 msg=f"Saved XML staging table to {str(xmlscc_csv_out_fi)}."
             )
 
-            self.logger.info(
-                msg=f"Aggregating detailed activity to develop aggregate tables table..."
+            xmlscc_df = pd.read_csv(
+                self.out_dir_pp.joinpath("xmlSCCStagingTable.csv"),
             )
-            agg_act_emis_dict = csvxmlgen.aggxlsxgen(act_emis_dict)
-            agg_tab_out_fi = self.out_dir_pp.joinpath("aggregateTable.xlsx")
-            with pd.ExcelWriter(agg_tab_out_fi, engine="xlsxwriter") as writer:
-                for key, val in agg_act_emis_dict.items():
-                    val["emis"].to_excel(writer, sheet_name=f"{key}_emis", index=False)
-                    val["act"].to_excel(writer, sheet_name=f"{key}_act", index=False)
-            self.logger.info(msg=f"Saved aggregate tables to {str(agg_tab_out_fi)}.")
-        if self.genxmlfile:
-            # ToDo need user input for choosing year, season, daytype
-            year = 2026
-            season = "p1"
-            daytype = "fr"
-            scenario = str(year) + season + daytype
-            # xmlgen.xmlgen()
+            xmlscc_df_filt = xmlscc_df.loc[
+                lambda df: (df.year == self.xml_year_selected)
+                & (df.season == self.xml_season_selected)
+                & (df.dayType == self.xml_daytype_selected)
+            ]
+            self.xml["Payload"]["Location"] = xmlscc_df_filt
+            xmlgen.xmlgen(self.xml)
 
 
 if __name__ == "__main__":
     ppgui = PostProcessorGUI()
     ppgui.set_paths()
-    ppgui.provide_options()
-    ppgui.set_param()
+    ppgui.provide_csv_options()
+    ppgui.set_csv_param()
+    ppgui.provide_xml_options()
+    ppgui.set_xml_param()
     ppgui.check_params()
     ppgui.save_params()
     ppgui.run_pp()

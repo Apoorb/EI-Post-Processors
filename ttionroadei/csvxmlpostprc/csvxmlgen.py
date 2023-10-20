@@ -19,7 +19,7 @@ class CsvXmlGen:
         self.year_selected = gui_obj.year_selected
         self.season_selected = gui_obj.season_selected
         self.dayType_selected = gui_obj.daytype_selected
-        self.FIPS_selected = gui_obj.counties_selected
+        self.FIPS_selected = gui_obj.FIPS_selected
         self.outpollutant = pd.DataFrame.from_dict(
             gui_obj.pollutant_map_codes_selected, orient="index"
         ).reset_index()
@@ -58,6 +58,8 @@ class CsvXmlGen:
             ]
         ls_df = []
         for ei in self.ei_fis.keys():
+            if ei not in self.ei_selected:
+                continue
             for cat, path in self.ei_fis[ei].items():
                 df = pd.read_csv(path, sep="\t")
                 # FixMe: the revised output from Chaoyi might handle this
@@ -87,7 +89,7 @@ class CsvXmlGen:
         _emis_tmp = pd.concat(ls_df)
         _emis_tmp1 = self.outpollutant.merge(_emis_tmp, on="pollutantID", how="left")
         try:
-            if set(_emis_tmp1.emissionunits.unique()) != set(
+            if set() != set(_emis_tmp1.emissionunits.unique()) - set(
                 self.conversion_factor.input_units.values
             ):
                 raise ValueError(

@@ -280,6 +280,8 @@ def unit_converter(in_unit, out_unit):
 
 
 def delete_old_log_files(log_directory, max_age_in_days):
+    logger = lg.getLogger(name=__file__)
+    logger = _add_handler(dir=log_directory, logger=logger)
     # Get the current date and time.
     current_datetime = datetime.datetime.now()
 
@@ -298,7 +300,7 @@ def delete_old_log_files(log_directory, max_age_in_days):
                 log_file.unlink()
                 print(f"Deleted old log file: {log_file.name}")
 
-    print("Log files with old timestamps have been deleted.")
+    logger.info(msg="Log files with old timestamps have been deleted.")
 
 
 @profile()

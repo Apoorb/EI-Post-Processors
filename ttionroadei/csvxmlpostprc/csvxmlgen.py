@@ -1,20 +1,17 @@
 """
 Generate detailed and summarized csv files
+Created on: 10/17/2023
+Created by: Apoorb
 """
-from pathlib import Path
-import yaml
 import pandas as pd
 import logging as lg
-import ttionroadei
 from ttionroadei.utils import _add_handler, settings
 
 
 class CsvXmlGen:
     """
-    CsvXmlGen is a class for generating detailed and summarized CSV and XML files for emissions data.
-
     This class is responsible for processing emissions data and activity data, and
-    aggregating them into CSV and XML files. It provides methods for performing data
+    aggregating them into CSV, xlsx, and XML files. It provides methods for performing data
     quality checks, adding labels to the data, generating detailed CSV files, aggregating
     data, and creating XML files for various scenarios.
 
@@ -40,19 +37,17 @@ class CsvXmlGen:
     FIPSs_selected : list
         The selected FIPS codes for data processing.
     outpollutants : pd.DataFrame
-        DataFrame containing selected pollutant codes for data processing.
+        DataFrame containing selected pollutant codes and mapping to MOVES pollutantIDs.
     eis_selected : list
         The selected emissions data categories.
     act_fis : dict
         File paths for off-road activity data.
     ei_fis : dict
         File paths for emissions data.
-    output_units : str
-        The output units for emissions data.
     conversion_factor : pd.DataFrame
         Conversion factors for emissions data units.
     area_rdtype_df : pd.DataFrame
-        Dataframe containing area-specific road type mapping data.
+        Dataframe containing area+road type mapping to MOVES.
     sccfun : function
         A lambda function for generating SCC (Source Classification Code) from data.
     sutFtfun : function
@@ -113,7 +108,6 @@ class CsvXmlGen:
         self.ei_fis = {}
         for ei in self.eis_selected:
             self.ei_fis[ei] = gui_obj.__getattribute__(f"ei_fis_{ei}")
-        self.output_units = gui_obj.output_units
         self.conversion_factor = gui_obj.conversion_factor
         self.area_rdtype_df = gui_obj.tdm_hpms_rdtype_flt
         self.sccfun = (
@@ -130,8 +124,6 @@ class CsvXmlGen:
 
     def _emisprc(self, dev_w_mvs3):
         """
-        Process emissions data and filter it based on selected parameters.
-
         This method processes emissions data, applies filters, and formats it for
         further processing. It reads emissions data files for different EI
         categories, filters them based on selected parameters such as FIPS codes,
@@ -212,9 +204,7 @@ class CsvXmlGen:
 
     def _actprc(self, dev_w_mvs3):
         """
-        Process off-road activity data and filter it based on selected parameters.
-
-        This method processes off-road activity data, applies filters, and formats it
+        This method processes activity data, applies filters, and formats it
         for further processing. It reads activity data files, filters them based on
         selected parameters such as FIPS codes, and renames columns for consistency.
 
@@ -274,8 +264,6 @@ class CsvXmlGen:
 
     def _actqc(self):
         """
-        Perform activity quality control.
-
         This method is responsible for performing quality control checks on the activity
         data used in the CsvXmlGen class.
         """
@@ -285,8 +273,6 @@ class CsvXmlGen:
 
     def _emisqc(self):
         """
-        Perform emissions quality control.
-
         This method is responsible for performing quality control checks on the emissions
         data used in the CsvXmlGen class.
         """
@@ -296,8 +282,6 @@ class CsvXmlGen:
 
     def _outputsqc(self):
         """
-        Perform output quality control.
-
         This method is responsible for performing quality control checks on the output
         data used in the CsvXmlGen class.
         """
@@ -309,8 +293,6 @@ class CsvXmlGen:
 
     def act_add_labs(self, df_):
         """
-        Add labels and merge data in the activity data.
-
         This method adds labels to the activity data and merges it with other relevant
         data, such as area labels, road type labels, and more.
 
@@ -343,8 +325,6 @@ class CsvXmlGen:
 
     def emis_add_labs(self, df_):
         """
-        Add labels and merge data in the emissions data.
-
         This method adds labels to the emissions data and merges it with other relevant
         data, such as area labels, road type labels, pollutant labels, and more.
 
@@ -382,8 +362,6 @@ class CsvXmlGen:
 
     def detailedcsvgen(self, dev_w_mvs3=True):
         """
-        Generate detailed CSV files for activity and emissions data.
-
         This method generates detailed CSV files for activity and emissions data,
         applying various processing steps and adding labels.
 
@@ -422,9 +400,8 @@ class CsvXmlGen:
 
     def aggxlsxgen(self, act_emis_dict):
         """
-        Generate aggregated Excel files for activity and emissions data. This method
-        aggregates detailed activity and emissions data and generates Excel files with
-        aggregated data.
+        Generate aggregated Excel file for activity and emissions data. This method
+        aggregates detailed activity and emissions data by different indices.
 
         Parameters
         ----------
@@ -528,8 +505,6 @@ class CsvXmlGen:
         xml_daytype_selected,
     ):
         """
-        Generate aggregated data for NEI SCCs (Source Classification Codes).
-
         This method aggregates detailed activity and emissions data to NEI SCCs for
         specific parameters.
 

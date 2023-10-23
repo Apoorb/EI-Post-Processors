@@ -156,6 +156,34 @@ def get_labels(
     host="127.0.0.1",
     port=3306,
 ):
+    """
+    Retrieve labels and information from a MOVES default database.
+
+    Parameters
+    ----------
+    database_nm : str, optional
+        The name of the MOVES default database to connect to. Default is 'mvs4defaultdb' from settings.YAML.
+    user : str, optional
+        The username for the database connection. Default is 'moves'.
+    password : str, optional
+        The password for the database connection. Default is 'moves'.
+    host : str, optional
+        The host or IP address of the database server. Default is '127.0.0.1'.
+    port : int, optional
+        The port number to use for the database connection. Default is 3306.
+
+    Returns
+    -------
+    dict
+        A dictionary containing various dataframes with labels and information for use in MOVES:
+        - 'county': Dataframe with county labels.
+        - 'emisprc': Dataframe with emission process labels.
+        - 'pollutants': Dataframe with pollutant labels.
+        - 'moves_roadtypes': Dataframe with MOVES road type labels.
+        - 'moves_sut': Dataframe with source use type labels.
+        - 'moves_ft': Dataframe with fuel type labels.
+        - 'act_lab': Dataframe with activity labels.
+    """
     db_url = f"mysql+pymysql://{user}:{password}@{host}:{port}/{database_nm}"
     engine = create_engine(db_url)
     conn = engine.connect()
@@ -266,6 +294,32 @@ def get_labels(
 
 
 def unit_converter(in_unit, out_unit):
+    """
+    Convert a quantity from one unit to another using the Pint library. This function
+    uses the Pint library to perform unit conversions. It defines unit relationships and
+    then calculates the conversion factor to transform a quantity from the input unit to
+    the target unit.
+
+    Parameters
+    ----------
+    in_unit : str
+        The input unit for conversion, e.g., 'MBTU' (million British Thermal Units).
+    out_unit : str
+        The target unit for conversion, e.g., 'Kilojoules' (kilojoules).
+
+    Returns
+    -------
+    float
+        The conversion factor to convert from the input unit to the target unit.
+
+
+    Example usage:
+    ```
+    conversion_factor = unit_converter('MBTU', 'Kilojoules')
+    value_in_mbtu = 10  # Example value in MBTU
+    value_in_kilojoules = value_in_mbtu * conversion_factor
+    ```
+    """
     ureg = UnitRegistry()
     ureg.define("MBTU = 1e6 BTU")
     ureg.define("Kilojoules = kilojoule")
@@ -280,6 +334,29 @@ def unit_converter(in_unit, out_unit):
 
 
 def delete_old_log_files(log_directory, max_age_in_days):
+    """
+    This function iterates through the log files in the specified directory, checks their
+    timestamps, and deletes log files that are older than the specified maximum age. It is
+     useful for managing log files and ensuring that old log data is regularly cleaned up.
+
+    Parameters
+    ----------
+    log_directory : str
+        The directory where log files are located.
+    max_age_in_days : int
+        The maximum age, in days, for log files to be retained. Log files older than this threshold will be deleted.
+
+    Returns
+    -------
+    None
+
+    Example usage:
+    ```python
+    log_directory = '/path/to/log/files'
+    max_age_in_days = 30  # Delete log files older than 30 days.
+    delete_old_log_files(log_directory, max_age_in_days)
+    ```
+    """
     logger = lg.getLogger(name=__file__)
     logger = _add_handler(dir=log_directory, logger=logger)
     # Get the current date and time.

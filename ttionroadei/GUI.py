@@ -2,7 +2,8 @@
 This is a mockup of the inputs needed from the user for the post processor to work.
 I (AB) am using folders from the current (Oct 10, 2023 MOVES 3) utilities.
 This needs to be revised based on how the GUI gets redesigned.
-
+Created on: 10/05/2023
+Created by: Apoorb
 """
 from pathlib import Path
 import pandas as pd
@@ -24,36 +25,29 @@ class PostProcessorGUI:
     """
     PostProcessorGUI is a class for setting up and running the post-processing of emissions
     data from MOVES. This class is responsible for configuring the post-processing
-    parameters and generating detailed CSV files, aggregated and pivoted CSV files, and
-    XML files for emissions data based on user input and pre-defined settings. It
-    provides methods for setting paths, specifying input options, saving parameters,
-    and running the post-processing workflow.
+    parameters and generating detailed CSV files, aggregated and pivoted CSV/ XLSM files,
+    and XML files for emissions and activity data based on user input and pre-defined
+    settings. It provides methods for setting paths, specifying input options, saving
+    parameters, and running the post-processing workflow.
 
     Attributes
     ----------
-    ei_base_dir: str or None, optional
-        The base directory for MOVES input data. If not provided, the class will use
-        default settings.
-    log_dir: str, optional
-        The directory for log files. Default is "./logs".
-    log_dir : str
+    ei_base_dir: str
+        The base directory for MOVES input data.
+    log_dir: str
         The directory for log files.
     logger : logging.Logger
         The logger for recording information and errors during the post-processing.
     labels : dict
-        A dictionary containing labels for emissions data.
-    ei_base_dir : str
-        The base directory for MOVES input data.
-    out_dir : str
-        The output directory for post-processed data.
+        A dictionary containing labels (MOVES road type, process, ...) for emissions data.
     out_dir_pp : pathlib.Path
-        The output directory for post-processed data as a Path object.
+        The output directory for post-processed data.
     ei_fis_EMS : dict
         A dictionary containing file paths for different emissions data categories.
     ei_fis_RF : dict
-        A dictionary containing file paths for roadway fractions data.
+        A dictionary containing file paths for refueling emission data.
     ei_fis_TEC : dict
-        A dictionary containing file paths for total emissions data.
+        A dictionary containing file paths for total energy consumption data.
     transvmtvht_fi : str
         The file path for VMT and VHT data.
     offroadact_dir : str
@@ -83,6 +77,16 @@ class PostProcessorGUI:
         Save the post-processing parameters as a YAML file.
     check_params()
         Check the validity of the provided parameters.
+    process_detailed_csv()
+        Process and combine main module data to develop detailed data and save it as CSV files.
+    load_detailed_csv_data()
+        Load detailed activity and emission data from CSV files.
+    process_aggregate_tables()
+        Aggregate detailed activity data to develop aggregate tables and save them as Excel files.
+    process_xml_files()
+        Process and combine detailed activity and emission data to develop XML staging
+        table and save it as a CSV file. Then, use the staging table to generate an XML
+        file.
     run_pp()
         Execute the post-processing workflow, including generating CSV and XML files.
 
@@ -99,11 +103,12 @@ class PostProcessorGUI:
     ppgui.run_pp()
     """
 
-    def __init__(self, ei_base_dir=None, log_dir=r"./logs"):
+    def __init__(self, ei_base_dir, log_dir):
         ##### Paths ####################################################################
         # TODO: Change to MOVES 4 utilities structure. I am using old utilities. I am
         #  hard coding. Handle this through a config file or setting.py. Ideally
         #  concatenate the paths based on the `ei_base_dir` path.
+        self.ei_base_dir = ei_base_dir
         self.log_dir = log_dir
         self.logger = lg.getLogger(name=__file__)
         self.logger = _add_handler(dir=self.log_dir, logger=self.logger)
@@ -112,8 +117,6 @@ class PostProcessorGUI:
         )
         delete_old_log_files(log_directory=log_dir, max_age_in_days=30)
         self.labels = dict()
-        self.ei_base_dir = ""
-        self.out_dir = ""
         self.out_dir_pp = Path()
         self.ei_fis_EMS = dict()
         self.ei_fis_RF = dict()
@@ -150,12 +153,10 @@ class PostProcessorGUI:
         self.input_units = dict()
         self.output_units = dict()
         self.conversion_factor = pd.DataFrame()
-
-        # TODO: Ask the user for XML Header details.
         self.gendetailedcsvfiles = True
         self.genaggpivfiles = True
-        self.genxmlfile = True
         ##### XML Fields ###############################################################
+        self.genxmlfile = True
         self.xml_pollutant_codes_dropdown = list()
         self.xml_year_dropdown = list()
         self.xml_season_dropdown = list()
@@ -172,8 +173,6 @@ class PostProcessorGUI:
 
         This method initializes paths to directories and files used in the
         post-processing workflow, such as input data directories and output directories.
-        It also configures the logging directory and logger for recording information
-        and errors.
         """
         self.ei_dir = Path(
             r"E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - "
@@ -220,15 +219,14 @@ class PostProcessorGUI:
         self.output_yaml_file = Path(self.log_dir).joinpath(
             "postProcessorSelection.yaml"
         )
-        self.out_dir = Path(r"C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24")
-        self.out_dir_pp = self.out_dir.joinpath("Summary")
+        self.out_dir_pp = Path(
+            r"C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary"
+        )
         self.out_dir_pp.mkdir(exist_ok=True)
 
     def _get_roadtype(self):
         """Retrieve and process road type data from a mapping file."""
         # TODO: add error checking to see if the area exisits in the mapping file.
-        self.use_tdm_area_rdtype = True
-        self.use_hpms_area_rdtype = False
         if self.use_tdm_area_rdtype or self.use_hpms_area_rdtype:
             self.tdm_hpms_rdtype = pd.read_csv(self.fi_temp_tdm_hpms_rdtype)
             self.tdm_hpms_rdtype = self.tdm_hpms_rdtype.drop(columns=["MOVES_RoadType"])
@@ -285,9 +283,7 @@ class PostProcessorGUI:
         # TODO: Based on the options chosen for earlier modules in the GUI. Give users a
         #  dropdown based on it.
         # TODO: Based on the inventory type chosen, get the detailed table on associated
-        #  processes from MOVES default database.  Have a default mapping, but give
-        #  users to
-        #  define their own
+        #  processes and/or pollutants from MOVES default database.
         # 2. Based on the analysis areas (assuming we can have multiple analysis
         # areas) chosen
         # for the GUI for the emission calc, give users a dropdown.
@@ -382,7 +378,7 @@ class PostProcessorGUI:
         files based on the specified options. It includes the selection of emissions
         data categories, areas, counties, years, seasons, day types, and pollutant codes.
         """
-        self.eis_selected = ["EMS", "TEC"]  #  "RF",
+        self.eis_selected = ["EMS", "TEC", "RF"]  #  "RF",
         self.area_selected = "HGB"
         self.FIPSs_selected = [
             48201,
@@ -411,6 +407,8 @@ class PostProcessorGUI:
         # TODO: Give option to provide custom mapping of road types based on
         #  following columns:
         #  areaTypeId, areaType, roadTypeId, roadType, mvSroadTypeId, mvSroadType
+        self.use_tdm_area_rdtype = True
+        self.use_hpms_area_rdtype = False
         self._get_roadtype()
         self.labels = get_labels(
             database_nm=settings.get("MOVES4_Default_DB"),
@@ -419,7 +417,6 @@ class PostProcessorGUI:
             host="127.0.0.1",
             port=3308,
         )
-
         # 7. Specific the options that need to be generated:
         # a) Detailed CSV files
         # b) Aggregated and Pivoted CSV files
@@ -496,6 +493,7 @@ class PostProcessorGUI:
             "season_selected": self.seasons_selected,
             "daytype_selected": self.daytypes_selected,
             "pollutant_map_codes_selected": self.pollutant_map_codes_selected,
+            "xml_pollutant_codes_selected": self.pollutant_codes_selected,
             "xml_pollutant_codes_selected": self.xml_pollutant_codes_selected,
             "input_units": self.input_units,
             "output_units": self.output_units.copy(),
@@ -668,7 +666,7 @@ class PostProcessorGUI:
         """
         Execute the post-processing workflow, including generating CSV and XML files.
         This method executes the complete post-processing workflow, which includes
-        generating detailed CSV files, aggregated and pivoted CSV files, and XML files
+        generating detailed CSV files, aggregated and pivoted xlsx files, and XML files
         for emissions data based on the specified parameters and options.
         """
         csvxmlgen = CsvXmlGen(self)
@@ -693,7 +691,7 @@ class PostProcessorGUI:
 
 
 if __name__ == "__main__":
-    ppgui = PostProcessorGUI()
+    ppgui = PostProcessorGUI(ei_base_dir=None, log_dir=r"./logs")
     ppgui.set_paths()
     ppgui.provide_csv_options()
     ppgui.set_csv_param()

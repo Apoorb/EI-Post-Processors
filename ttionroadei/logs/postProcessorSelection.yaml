@@ -1,6 +1,7 @@
 eis_selected:
 - EMS
 - TEC
+- RF
 area_selected: HGB
 counties_selected:
 - 48201

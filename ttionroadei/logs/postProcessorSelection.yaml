@@ -28,6 +28,12 @@ pollutant_map_codes_selected:
   - 117
   TEC:
   - 91
+pollutant_codes_selected:
+- CO
+- NOx
+- PM10
+- PM25
+- TEC
 xml_pollutant_codes_selected:
 - CO
 - NOx
@@ -108,6 +114,51 @@ act_fis:
     3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Activity_output\Hotelling_Hours.txt
   Starts: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
     3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Activity_output\Start.txt
+act_out_fi: !!python/object/apply:pathlib.WindowsPath
+- C:\
+- Users
+- a-bibeka
+- Documents
+- Projects_Temp
+- Utilities_FY24
+- Summary
+- activityDetailed.csv
+emis_out_fi: !!python/object/apply:pathlib.WindowsPath
+- C:\
+- Users
+- a-bibeka
+- Documents
+- Projects_Temp
+- Utilities_FY24
+- Summary
+- emissionDetailed.csv
+xmlscc_csv_out_fi: !!python/object/apply:pathlib.WindowsPath
+- C:\
+- Users
+- a-bibeka
+- Documents
+- Projects_Temp
+- Utilities_FY24
+- Summary
+- xmlSCCStagingTable.csv
+xmlscc_out_fi: !!python/object/apply:pathlib.WindowsPath
+- C:\
+- Users
+- a-bibeka
+- Documents
+- Projects_Temp
+- Utilities_FY24
+- Summary
+- <class 'str'>0.xml
+agg_tab_out_fi: !!python/object/apply:pathlib.WindowsPath
+- C:\
+- Users
+- a-bibeka
+- Documents
+- Projects_Temp
+- Utilities_FY24
+- Summary
+- aggregateTable.xlsx
 xml_data:
   Header:
     id: HGB_20

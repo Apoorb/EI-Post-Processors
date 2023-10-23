@@ -75,8 +75,6 @@ class PostProcessorGUI:
         Set the post-processing parameters for XML file generation.
     save_params()
         Save the post-processing parameters as a YAML file.
-    check_params()
-        Check the validity of the provided parameters.
     process_detailed_csv()
         Process and combine main module data to develop detailed data and save it as CSV files.
     load_detailed_csv_data()
@@ -98,7 +96,6 @@ class PostProcessorGUI:
     ppgui.set_csv_param()
     ppgui.provide_xml_options()
     ppgui.set_xml_param()
-    ppgui.check_params()
     ppgui.save_params()
     ppgui.run_pp()
     """
@@ -128,6 +125,11 @@ class PostProcessorGUI:
         self.output_yaml_file = ""
         self.onroadei_dir = ""
         self.ei_base_dir = None
+        self.act_out_fi = Path()
+        self.emis_out_fi = Path()
+        self.xmlscc_csv_out_fi = Path()
+        self.xmlscc_out_fi = Path()
+        self.agg_tab_out_fi = Path()
         ##### Parameters ###############################################################
         self.ei_dropdown = tuple()
         self.eis_selected = tuple()
@@ -223,6 +225,12 @@ class PostProcessorGUI:
             r"C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary"
         )
         self.out_dir_pp.mkdir(exist_ok=True)
+        self.act_out_fi = self.out_dir_pp.joinpath("activityDetailed.csv")
+        self.emis_out_fi = self.out_dir_pp.joinpath("emissionDetailed.csv")
+        self.xmlscc_csv_out_fi = self.out_dir_pp.joinpath("xmlSCCStagingTable.csv")
+        xml_fi_name = f"{self.area_selected}{self.xml_year_selected}{self.xml_season_selected}{self.xml_daytype_selected}.xml"
+        self.xmlscc_out_fi = self.out_dir_pp.joinpath(xml_fi_name)
+        self.agg_tab_out_fi = self.out_dir_pp.joinpath("aggregateTable.xlsx")
 
     def _get_roadtype(self):
         """Retrieve and process road type data from a mapping file."""
@@ -484,7 +492,6 @@ class PostProcessorGUI:
         file for future reference and reproducibility.
         """
         # Define a dictionary to hold all the variables
-        self.check_params()
         variables_dict = {
             "eis_selected": self.eis_selected,
             "area_selected": self.area_selected,
@@ -493,7 +500,7 @@ class PostProcessorGUI:
             "season_selected": self.seasons_selected,
             "daytype_selected": self.daytypes_selected,
             "pollutant_map_codes_selected": self.pollutant_map_codes_selected,
-            "xml_pollutant_codes_selected": self.pollutant_codes_selected,
+            "pollutant_codes_selected": self.pollutant_codes_selected,
             "xml_pollutant_codes_selected": self.xml_pollutant_codes_selected,
             "input_units": self.input_units,
             "output_units": self.output_units.copy(),
@@ -511,6 +518,11 @@ class PostProcessorGUI:
             "ei_fis_RF": {key: str(value) for key, value in self.ei_fis_RF.items()},
             "ei_fis_TEC": {key: str(value) for key, value in self.ei_fis_TEC.items()},
             "act_fis": {key: str(value) for key, value in self.act_fis.items()},
+            "act_out_fi": self.act_out_fi,
+            "emis_out_fi": self.emis_out_fi,
+            "xmlscc_csv_out_fi": self.xmlscc_csv_out_fi,
+            "xmlscc_out_fi": self.xmlscc_out_fi,
+            "agg_tab_out_fi": self.agg_tab_out_fi,
             "xml_data": self.xml_data,
         }
         # Define the output YAML file path
@@ -521,16 +533,6 @@ class PostProcessorGUI:
                 variables_dict, yaml_file, default_flow_style=False, sort_keys=False
             )
         self.logger.info(msg=f"Variables saved to {str(self.output_yaml_file)}")
-
-    def check_params(self):
-        """
-        Check the validity of the provided parameters.
-
-        This method performs checks to ensure that the provided post-processing
-        parameters are valid and consistent. It helps identify potential issues or
-        errors in the parameter settings.
-        """
-        ...
 
     def process_detailed_csv(self, csvxmlgen, act_out_fi, emis_out_fi):
         """
@@ -612,7 +614,9 @@ class PostProcessorGUI:
                 val["act"].to_excel(writer, sheet_name=f"{key}_act", index=False)
         self.logger.info(f"Saved aggregate tables to {str(agg_tab_out_fi)}.")
 
-    def process_xml_files(self, csvxmlgen, act_emis_dict, xmlscc_csv_out_fi):
+    def process_xml_files(
+        self, csvxmlgen, act_emis_dict, xmlscc_csv_out_fi, xmlscc_out_fi
+    ):
         """
         Process and combine detailed activity and emission data to develop XML staging
         table and save it as a CSV file. Then, use the staging table to generate an XML
@@ -653,8 +657,6 @@ class PostProcessorGUI:
             & (df.dayType == self.xml_daytype_selected)
         ]
         self.xml_data["Payload"]["Location"] = xmlscc_df_filt
-        xml_fi_name = f"{self.area_selected}{self.xml_year_selected}{self.xml_season_selected}{self.xml_daytype_selected}.xml"
-        xmlscc_out_fi = self.out_dir_pp.joinpath(xml_fi_name)
         xmlgen_obj = XMLGenerator(self.xml_data)
         tree = xmlgen_obj.generate_xml()
         tree.write(
@@ -670,22 +672,20 @@ class PostProcessorGUI:
         for emissions data based on the specified parameters and options.
         """
         csvxmlgen = CsvXmlGen(self)
-        act_out_fi = self.out_dir_pp.joinpath("activityDetailed.csv")
-        emis_out_fi = self.out_dir_pp.joinpath("emissionDetailed.csv")
-        xmlscc_csv_out_fi = self.out_dir_pp.joinpath("xmlSCCStagingTable.csv")
-        agg_tab_out_fi = self.out_dir_pp.joinpath("aggregateTable.xlsx")
         if self.gendetailedcsvfiles:
             act_emis_dict = self.process_detailed_csv(
-                csvxmlgen, act_out_fi, emis_out_fi
+                csvxmlgen, self.act_out_fi, self.emis_out_fi
             )
         else:
             act_emis_dict = self.load_detailed_csv_data()
 
         if self.genaggpivfiles:
-            self.process_aggregate_tables(csvxmlgen, act_emis_dict, agg_tab_out_fi)
+            self.process_aggregate_tables(csvxmlgen, act_emis_dict, self.agg_tab_out_fi)
 
         if self.genxmlfile:
-            self.process_xml_files(csvxmlgen, act_emis_dict, xmlscc_csv_out_fi)
+            self.process_xml_files(
+                csvxmlgen, act_emis_dict, self.xmlscc_csv_out_fi, self.xmlscc_out_fi
+            )
 
         self.logger.info("Post-processing ended")
 
@@ -697,6 +697,5 @@ if __name__ == "__main__":
     ppgui.set_csv_param()
     ppgui.provide_xml_options()
     ppgui.set_xml_param()
-    ppgui.check_params()
     ppgui.save_params()
     ppgui.run_pp()

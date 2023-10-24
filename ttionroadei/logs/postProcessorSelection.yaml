@@ -1,17 +1,17 @@
-eis_selected:
+EIs_selected:
 - EMS
 - TEC
 - RF
 area_selected: HGB
-counties_selected:
+FIPSs_selected:
 - 48201
 - 48039
 - 48157
-year_selected:
+years_selected:
 - 2026
-season_selected: !!python/tuple
+seasons_selected:
 - p1
-daytype_selected: !!python/tuple
+daytypes_selected:
 - fr
 pollutant_map_codes_selected:
   CO:
@@ -28,23 +28,23 @@ pollutant_map_codes_selected:
   - 117
   TEC:
   - 91
+  VOC:
+  - 87
 pollutant_codes_selected:
 - CO
 - NOx
 - PM10
 - PM25
 - TEC
+- VOC
+xml_year_selected: 2026
+xml_season_selected: p1
+xml_daytype_selected: fr
 xml_pollutant_codes_selected:
 - CO
 - NOx
 - PM10
 - PM25
-input_units:
-  mass: grams
-  energy: Kilojoules
-output_units:
-  mass: short_ton
-  energy: MBTU
 conversion_factor:
   input_units:
     0: grams
@@ -114,51 +114,11 @@ act_fis:
     3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Activity_output\Hotelling_Hours.txt
   Starts: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
     3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Activity_output\Start.txt
-act_out_fi: !!python/object/apply:pathlib.WindowsPath
-- C:\
-- Users
-- a-bibeka
-- Documents
-- Projects_Temp
-- Utilities_FY24
-- Summary
-- activityDetailed.csv
-emis_out_fi: !!python/object/apply:pathlib.WindowsPath
-- C:\
-- Users
-- a-bibeka
-- Documents
-- Projects_Temp
-- Utilities_FY24
-- Summary
-- emissionDetailed.csv
-xmlscc_csv_out_fi: !!python/object/apply:pathlib.WindowsPath
-- C:\
-- Users
-- a-bibeka
-- Documents
-- Projects_Temp
-- Utilities_FY24
-- Summary
-- xmlSCCStagingTable.csv
-xmlscc_out_fi: !!python/object/apply:pathlib.WindowsPath
-- C:\
-- Users
-- a-bibeka
-- Documents
-- Projects_Temp
-- Utilities_FY24
-- Summary
-- <class 'str'>0.xml
-agg_tab_out_fi: !!python/object/apply:pathlib.WindowsPath
-- C:\
-- Users
-- a-bibeka
-- Documents
-- Projects_Temp
-- Utilities_FY24
-- Summary
-- aggregateTable.xlsx
+act_out_fi: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary\activityDetailed.csv
+emis_out_fi: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary\emissionDetailed.csv
+xmlscc_csv_out_fi: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary\xmlSCCStagingTable.csv
+xmlscc_xml_out_fi: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary\HGB2026p1fr.xml
+agg_tab_out_fi: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary\aggregateTable.xlsx
 xml_data:
   Header:
     id: HGB_20

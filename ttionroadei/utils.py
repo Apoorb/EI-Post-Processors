@@ -139,7 +139,7 @@ def _add_handler(logger, dir, filename=log_filename, log_level=log_level):
         # create file handler and log formatter and set them up
         handler = lg.FileHandler(log_filename, encoding="utf-8")
         formatter = lg.Formatter(
-            "%(asctime)s %(levelname)s %(module)s %(funcName)s %(lineno)s %(message)s",
+            "%(asctime)s | %(levelname)s | %(module)s | %(funcName)s | %(lineno)s | %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
         handler.setFormatter(formatter)

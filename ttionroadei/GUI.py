@@ -128,11 +128,11 @@ class PostProcessorGUI:
         self.act_out_fi = Path()
         self.emis_out_fi = Path()
         self.xmlscc_csv_out_fi = Path()
-        self.xmlscc_out_fi = Path()
+        self.xmlscc_xml_out_fi = Path()
         self.agg_tab_out_fi = Path()
         ##### Parameters ###############################################################
-        self.ei_dropdown = tuple()
-        self.eis_selected = tuple()
+        self.EI_dropdown = tuple()
+        self.EIs_selected = tuple()
         self.area_dropdown = tuple()
         self.area_selected = str
         self.FIPS_dropdown = tuple()
@@ -228,8 +228,6 @@ class PostProcessorGUI:
         self.act_out_fi = self.out_dir_pp.joinpath("activityDetailed.csv")
         self.emis_out_fi = self.out_dir_pp.joinpath("emissionDetailed.csv")
         self.xmlscc_csv_out_fi = self.out_dir_pp.joinpath("xmlSCCStagingTable.csv")
-        xml_fi_name = f"{self.area_selected}{self.xml_year_selected}{self.xml_season_selected}{self.xml_daytype_selected}.xml"
-        self.xmlscc_out_fi = self.out_dir_pp.joinpath(xml_fi_name)
         self.agg_tab_out_fi = self.out_dir_pp.joinpath("aggregateTable.xlsx")
 
     def _get_roadtype(self):
@@ -315,7 +313,7 @@ class PostProcessorGUI:
         # TODO: Give a dropdown to select pollutants to be combined.
         # TODO: Give user option to rename any MOVES pollutants that need to be
         #  renames for NEI?
-        self.ei_dropdown = ["EMS", "RF", "TEC"]
+        self.EI_dropdown = ["EMS", "RF", "TEC"]
         self.area_dropdown = ["HGB", "TX"]
         # File the associated counties from previous modules.
         self.FIPS_dropdown = [
@@ -347,6 +345,7 @@ class PostProcessorGUI:
             "PM10": [100, 106, 107],
             "PM25": [110, 116, 117],
             "TEC": [91],  # Should always be selected for TEC EIs
+            "VOC": [87],
         }
         # ToDo: Choose from the following options
         settings["valid_units"]
@@ -386,7 +385,7 @@ class PostProcessorGUI:
         files based on the specified options. It includes the selection of emissions
         data categories, areas, counties, years, seasons, day types, and pollutant codes.
         """
-        self.eis_selected = ["EMS", "TEC", "RF"]  #  "RF",
+        self.EIs_selected = ["EMS", "TEC", "RF"]  #  "RF",
         self.area_selected = "HGB"
         self.FIPSs_selected = [
             48201,
@@ -396,12 +395,19 @@ class PostProcessorGUI:
         self.years_selected = [
             2026,
         ]
-        self.seasons_selected = ("p1",)
-        self.daytypes_selected = ("fr",)
+        self.seasons_selected = [
+            "p1",
+        ]
+        self.daytypes_selected = [
+            "fr",
+        ]
         self.pollutant_codes_selected = ["CO", "NOx", "PM10", "PM25"]  # , "TEC"
-        if "TEC" in self.eis_selected:
+        if "TEC" in self.EIs_selected:
             if "TEC" not in self.pollutant_codes_selected:
                 self.pollutant_codes_selected.append("TEC")
+        if "RF" in self.EIs_selected:
+            if "VOC" not in self.pollutant_codes_selected:
+                self.pollutant_codes_selected.append("VOC")
         self.pollutant_map_codes_selected = {
             k: v
             for k, v in self.pollutant_map.items()
@@ -483,6 +489,8 @@ class PostProcessorGUI:
         ] = "AERR MOVES 3.0.3-based 2020 annual on-road inventories for 254 Texas Counties"
         self.xml_data["Payload"]["ReportingPeriod"] = "O3D"
         self.xml_data["Payload"]["CalculationParameterTypeCode"] = "I"
+        xml_fi_name = f"{self.area_selected}{self.xml_year_selected}{self.xml_season_selected}{self.xml_daytype_selected}.xml"
+        self.xmlscc_xml_out_fi = self.out_dir_pp.joinpath(xml_fi_name)
 
     def save_params(self):
         """
@@ -493,17 +501,18 @@ class PostProcessorGUI:
         """
         # Define a dictionary to hold all the variables
         variables_dict = {
-            "eis_selected": self.eis_selected,
+            "EIs_selected": self.EIs_selected,
             "area_selected": self.area_selected,
-            "counties_selected": self.FIPSs_selected,
-            "year_selected": self.years_selected,
-            "season_selected": self.seasons_selected,
-            "daytype_selected": self.daytypes_selected,
+            "FIPSs_selected": self.FIPSs_selected,
+            "years_selected": self.years_selected,
+            "seasons_selected": self.seasons_selected,
+            "daytypes_selected": self.daytypes_selected,
             "pollutant_map_codes_selected": self.pollutant_map_codes_selected,
             "pollutant_codes_selected": self.pollutant_codes_selected,
+            "xml_year_selected": self.xml_year_selected,
+            "xml_season_selected": self.xml_season_selected,
+            "xml_daytype_selected": self.xml_daytype_selected,
             "xml_pollutant_codes_selected": self.xml_pollutant_codes_selected,
-            "input_units": self.input_units,
-            "output_units": self.output_units.copy(),
             "conversion_factor": self.conversion_factor.to_dict(),
             "fi_temp_tdm_hpms_rdtype": str(self.fi_temp_tdm_hpms_rdtype),
             "use_tdm_area_rdtype": self.use_tdm_area_rdtype,
@@ -518,11 +527,11 @@ class PostProcessorGUI:
             "ei_fis_RF": {key: str(value) for key, value in self.ei_fis_RF.items()},
             "ei_fis_TEC": {key: str(value) for key, value in self.ei_fis_TEC.items()},
             "act_fis": {key: str(value) for key, value in self.act_fis.items()},
-            "act_out_fi": self.act_out_fi,
-            "emis_out_fi": self.emis_out_fi,
-            "xmlscc_csv_out_fi": self.xmlscc_csv_out_fi,
-            "xmlscc_out_fi": self.xmlscc_out_fi,
-            "agg_tab_out_fi": self.agg_tab_out_fi,
+            "act_out_fi": str(self.act_out_fi),
+            "emis_out_fi": str(self.emis_out_fi),
+            "xmlscc_csv_out_fi": str(self.xmlscc_csv_out_fi),
+            "xmlscc_xml_out_fi": str(self.xmlscc_xml_out_fi),
+            "agg_tab_out_fi": str(self.agg_tab_out_fi),
             "xml_data": self.xml_data,
         }
         # Define the output YAML file path
@@ -534,7 +543,7 @@ class PostProcessorGUI:
             )
         self.logger.info(msg=f"Variables saved to {str(self.output_yaml_file)}")
 
-    def process_detailed_csv(self, csvxmlgen, act_out_fi, emis_out_fi):
+    def process_detailed_csv(self, csvxmlgen):
         """
         Process and combine main module data to develop detailed data and save it as CSV files.
 
@@ -542,10 +551,6 @@ class PostProcessorGUI:
         ----------
         csvxmlgen : CsvXmlGen
             An instance of the CsvXmlGen class for generating CSV and XML files.
-        act_out_fi : str
-            Path to the output file for detailed activity data.
-        emis_out_fi : str
-            Path to the output file for detailed emission data.
 
         Returns
         -------
@@ -556,10 +561,10 @@ class PostProcessorGUI:
             "Processing and combining main module data to develop detailed data..."
         )
         act_emis_dict = csvxmlgen.detailedcsvgen()
-        act_emis_dict["act"].to_csv(act_out_fi, index=False)
-        act_emis_dict["emis"].to_csv(emis_out_fi, index=False)
+        act_emis_dict["act"].to_csv(self.act_out_fi, index=False)
+        act_emis_dict["emis"].to_csv(self.emis_out_fi, index=False)
         self.logger.info(
-            f"Saved detailed activity and emission data to {str(act_out_fi)} and {str(emis_out_fi)}, respectively."
+            f"Saved detailed activity and emission data to {str(self.act_out_fi)} and {str(self.emis_out_fi)}, respectively."
         )
         return act_emis_dict
 
@@ -586,7 +591,7 @@ class PostProcessorGUI:
             raise
         return act_emis_dict
 
-    def process_aggregate_tables(self, csvxmlgen, act_emis_dict, agg_tab_out_fi):
+    def process_aggregate_tables(self, csvxmlgen, act_emis_dict):
         """
         Aggregate detailed activity data to develop aggregate tables and save them as
         Excel files.
@@ -597,8 +602,6 @@ class PostProcessorGUI:
             An instance of the CsvXmlGen class for generating CSV and XML files.
         act_emis_dict : dict
             A dictionary containing detailed activity and emission data.
-        agg_tab_out_fi : str
-            Path to the output file for aggregate tables.
 
         Returns
         -------
@@ -608,15 +611,13 @@ class PostProcessorGUI:
             "Aggregating detailed activity to develop aggregate tables table..."
         )
         agg_act_emis_dict = csvxmlgen.aggxlsxgen(act_emis_dict)
-        with pd.ExcelWriter(agg_tab_out_fi, engine="xlsxwriter") as writer:
+        with pd.ExcelWriter(self.agg_tab_out_fi, engine="xlsxwriter") as writer:
             for key, val in agg_act_emis_dict.items():
                 val["emis"].to_excel(writer, sheet_name=f"{key}_emis", index=False)
                 val["act"].to_excel(writer, sheet_name=f"{key}_act", index=False)
-        self.logger.info(f"Saved aggregate tables to {str(agg_tab_out_fi)}.")
+        self.logger.info(f"Saved aggregate tables to {str(self.agg_tab_out_fi)}.")
 
-    def process_xml_files(
-        self, csvxmlgen, act_emis_dict, xmlscc_csv_out_fi, xmlscc_out_fi
-    ):
+    def process_xml_files(self, csvxmlgen, act_emis_dict):
         """
         Process and combine detailed activity and emission data to develop XML staging
         table and save it as a CSV file. Then, use the staging table to generate an XML
@@ -628,8 +629,6 @@ class PostProcessorGUI:
             An instance of the CsvXmlGen class for generating CSV and XML files.
         act_emis_dict : dict
             A dictionary containing detailed activity and emission data.
-        xmlscc_csv_out_fi : str
-            Path to the output file for the XML staging table in CSV format.
 
         Returns
         -------
@@ -646,11 +645,11 @@ class PostProcessorGUI:
             xml_season_selected=self.xml_season_selected,
             xml_daytype_selected=self.xml_daytype_selected,
         )
-        xmlscc_df.to_csv(xmlscc_csv_out_fi, index=False)
-        self.logger.info(f"Saved XML staging table to {str(xmlscc_csv_out_fi)}.")
+        xmlscc_df.to_csv(self.xmlscc_csv_out_fi, index=False)
+        self.logger.info(f"Saved XML staging table to {str(self.xmlscc_csv_out_fi)}.")
 
         self.logger.info("Using Metadata and XML staging table to develop XML...")
-        xmlscc_df = pd.read_csv(xmlscc_csv_out_fi)
+        xmlscc_df = pd.read_csv(self.xmlscc_csv_out_fi)
         xmlscc_df_filt = xmlscc_df.loc[
             lambda df: (df.year == self.xml_year_selected)
             & (df.season == self.xml_season_selected)
@@ -660,9 +659,12 @@ class PostProcessorGUI:
         xmlgen_obj = XMLGenerator(self.xml_data)
         tree = xmlgen_obj.generate_xml()
         tree.write(
-            xmlscc_out_fi, pretty_print=True, xml_declaration=True, encoding="utf-8"
+            str(self.xmlscc_xml_out_fi),
+            pretty_print=True,
+            xml_declaration=True,
+            encoding="utf-8",
         )
-        self.logger.info(f"Saved XML to {str(xmlscc_out_fi)}.")
+        self.logger.info(f"Saved XML to {str(self.xmlscc_xml_out_fi)}.")
 
     def run_pp(self):
         """
@@ -671,22 +673,23 @@ class PostProcessorGUI:
         generating detailed CSV files, aggregated and pivoted xlsx files, and XML files
         for emissions data based on the specified parameters and options.
         """
-        csvxmlgen = CsvXmlGen(self)
-        if self.gendetailedcsvfiles:
-            act_emis_dict = self.process_detailed_csv(
-                csvxmlgen, self.act_out_fi, self.emis_out_fi
-            )
-        else:
-            act_emis_dict = self.load_detailed_csv_data()
-
-        if self.genaggpivfiles:
-            self.process_aggregate_tables(csvxmlgen, act_emis_dict, self.agg_tab_out_fi)
-
-        if self.genxmlfile:
-            self.process_xml_files(
-                csvxmlgen, act_emis_dict, self.xmlscc_csv_out_fi, self.xmlscc_out_fi
-            )
-
+        try:
+            csvxmlgen = CsvXmlGen(self)
+            if self.gendetailedcsvfiles:
+                act_emis_dict = self.process_detailed_csv(csvxmlgen)
+            else:
+                act_emis_dict = self.load_detailed_csv_data()
+            if self.genaggpivfiles:
+                self.process_aggregate_tables(csvxmlgen, act_emis_dict)
+        except Exception as err:
+            self.logger.error(f"Error in processing raw data: {err}")
+            raise
+        try:
+            if self.genxmlfile:
+                self.process_xml_files(csvxmlgen, act_emis_dict)
+        except Exception as err:
+            self.logger.error(f"Error in XML generation: {err}")
+            raise
         self.logger.info("Post-processing ended")
 
 

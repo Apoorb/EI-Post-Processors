@@ -38,7 +38,7 @@ class CsvXmlGen:
         The selected FIPS codes for data processing.
     outpollutants : pd.DataFrame
         DataFrame containing selected pollutant codes and mapping to MOVES pollutantIDs.
-    eis_selected : list
+    EIs_selected : list
         The selected emissions data categories.
     act_fis : dict
         File paths for off-road activity data.
@@ -96,10 +96,10 @@ class CsvXmlGen:
             .drop(columns="level_1")
         )
         self.outpollutants.columns = ["pollutantCode", "pollutantID"]
-        self.eis_selected = gui_obj.eis_selected
+        self.EIs_selected = gui_obj.EIs_selected
         self.act_fis = gui_obj.act_fis
         self.ei_fis = {}
-        for ei in self.eis_selected:
+        for ei in self.EIs_selected:
             self.ei_fis[ei] = gui_obj.__getattribute__(f"ei_fis_{ei}")
         self.conversion_factor = gui_obj.conversion_factor
         self.area_rdtype_df = gui_obj.tdm_hpms_rdtype_flt
@@ -110,10 +110,6 @@ class CsvXmlGen:
             + "0080"
         )
         self.sutFtfun = lambda df: df.sutLab + "_" + df.ftLab
-
-    def paramqc(self):
-        a = 1
-        ...
 
     def _emisprc(self, dev_w_mvs3):
         """
@@ -146,7 +142,7 @@ class CsvXmlGen:
             ]
         ls_df = []
         for ei in self.ei_fis.keys():
-            if ei not in self.eis_selected:
+            if ei not in self.EIs_selected:
                 continue
             for cat, path in self.ei_fis[ei].items():
                 df = pd.read_csv(path, sep="\t")

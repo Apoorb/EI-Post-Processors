@@ -241,7 +241,7 @@ class PostProcessorGUI:
         )
         area_sel = ""
         if self.use_tdm_area_rdtype:
-            if self.area_selected == "TLM":
+            if self.area_selected == "TYL":
                 area_sel = "TLM"
             else:
                 area_sel = self.area_selected

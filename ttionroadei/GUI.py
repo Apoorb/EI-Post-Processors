@@ -176,8 +176,9 @@ class PostProcessorGUI:
         post-processing workflow, such as input data directories and output directories.
         """
         self.ei_dir = Path(
-            r"C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31"
-            r"\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Emission_output"
+            r"C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\
+            2020AERR_tlm_tdm_mvs31\2020AERR_tlm_tdm_mvs31\2020AERR_tlm_tdm_mvs31_p"
+            r"\TYL\2020\swkd\Outputs\Emission_output"
         )
         self.ei_fis_EMS = {
             "OnRoad": self.ei_dir.joinpath("emission_output_VMT.txt"),
@@ -240,7 +241,10 @@ class PostProcessorGUI:
         )
         area_sel = ""
         if self.use_tdm_area_rdtype:
-            area_sel = self.area_selected
+            if self.area_selected == "TLM":
+                area_sel = "TLM"
+            else:
+                area_sel = self.area_selected
         else:
             area_sel = "VLink"
         try:
@@ -379,11 +383,9 @@ class PostProcessorGUI:
         self.EIs_selected = [
             "EMS",
         ]  #  "TEC", "RF"
-        self.area_selected = "AUS"
+        self.area_selected = "TYL"
         self.FIPSs_selected = [
-            48021,
-            48053,
-            48453,
+            48423,
         ]
         self.years_selected = [
             2020,
@@ -454,7 +456,7 @@ class PostProcessorGUI:
         self.xml_year_selected = 2020
         self.xml_season_selected = "s"
         self.xml_daytype_selected = "wkd"
-        self.xml_data["Header"]["id"] = "AUS_20swkd"
+        self.xml_data["Header"]["id"] = "ELP_20wwkd"
         self.xml_data["Header"]["AuthorName"] = "Mogwai Turner"
         self.xml_data["Header"][
             "OrganizationName"

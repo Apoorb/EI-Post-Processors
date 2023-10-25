@@ -1,18 +1,16 @@
 EIs_selected:
 - EMS
-- TEC
-- RF
-area_selected: HGB
+area_selected: AUS
 FIPSs_selected:
-- 48201
-- 48039
-- 48157
+- 48021
+- 48053
+- 48453
 years_selected:
-- 2026
+- 2020
 seasons_selected:
-- p1
+- s
 daytypes_selected:
-- fr
+- wkd
 pollutant_map_codes_selected:
   CO:
   - 2
@@ -26,20 +24,14 @@ pollutant_map_codes_selected:
   - 110
   - 116
   - 117
-  TEC:
-  - 91
-  VOC:
-  - 87
 pollutant_codes_selected:
 - CO
 - NOx
 - PM10
 - PM25
-- TEC
-- VOC
-xml_year_selected: 2026
-xml_season_selected: p1
-xml_daytype_selected: fr
+xml_year_selected: 2020
+xml_season_selected: s
+xml_daytype_selected: wkd
 xml_pollutant_codes_selected:
 - CO
 - NOx
@@ -47,81 +39,57 @@ xml_pollutant_codes_selected:
 - PM25
 conversion_factor:
   input_units:
-    0: grams
+    0: short_ton
     1: Kilojoules
   output_units:
     0: short_ton
     1: MBTU
   confactor:
-    0: 1.1023113109243878e-06
+    0: 1.0
     1: 9.478169879134377e-07
-fi_temp_tdm_hpms_rdtype: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects
-  - FY2024_Utility_Development\Resources\Input Data\Road Type Mapping\RoadType_Designation.csv
+fi_temp_tdm_hpms_rdtype: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\RoadType_Designation.csv
 use_tdm_area_rdtype: true
 gendetailedcsvfiles: true
 genaggpivfiles: true
 genxmlfile: true
 ei_base_dir: null
 log_dir: ./logs
-ei_dir: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-  3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output
+ei_dir: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Emission_output
 summary_dir: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary
 ei_fis_EMS:
-  OnRoad: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\emission_output_VMT.txt
-  APU: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\emission_output_APU.txt
-  ONI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\emission_output_ONI.txt
-  SHEI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\emission_output_SHEI.txt
-  SHP: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\emission_output_SHP.txt
-  Starts: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\emission_output_Starts.txt
+  OnRoad: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Emission_output\emission_output_VMT.txt
+  APU: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Emission_output\emission_output_APU.txt
+  ONI: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Emission_output\emission_output_ONI.txt
+  SHEI: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Emission_output\emission_output_SHEI.txt
+  SHP: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Emission_output\emission_output_SHP.txt
+  Starts: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Emission_output\emission_output_Starts.txt
 ei_fis_RF:
-  OnRoad: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\RF_emission_output_VMT.txt
-  APU: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\RF_emission_output_APU.txt
-  ONI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\RF_emission_output_ONI.txt
-  SHEI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\RF_emission_output_SHEI.txt
-  Starts: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\RF_emission_output_Starts.txt
+  OnRoad: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Emission_output\RF_emission_output_VMT.txt
+  APU: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Emission_output\RF_emission_output_APU.txt
+  ONI: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Emission_output\RF_emission_output_ONI.txt
+  SHEI: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Emission_output\RF_emission_output_SHEI.txt
+  Starts: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Emission_output\RF_emission_output_Starts.txt
 ei_fis_TEC:
-  OnRoad: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\TEC_emission_output_VMT.txt
-  APU: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\TEC_emission_output_APU.txt
-  ONI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\TEC_emission_output_ONI.txt
-  SHEI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\TEC_emission_output_SHEI.txt
-  Starts: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Emission_output\TEC_emission_output_Starts.txt
+  OnRoad: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Emission_output\TEC_emission_output_VMT.txt
+  APU: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Emission_output\TEC_emission_output_APU.txt
+  ONI: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Emission_output\TEC_emission_output_ONI.txt
+  SHEI: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Emission_output\TEC_emission_output_SHEI.txt
+  Starts: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Emission_output\TEC_emission_output_Starts.txt
 act_fis:
-  OnRoad: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Summarized_output\VMT_st_ft_Summary.txt
-  AdjSHP: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Activity_output\Adjusted_SHP.txt
-  TotSHP: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Activity_output\SHP.txt
-  ONI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Activity_output\ONI.txt
-  APU_SHEI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Activity_output\Hotelling_Hours.txt
-  Starts: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2022_HGB2026_\_Tasks\Task
-    3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr\Outputs\Activity_output\Start.txt
+  OnRoad: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Summarized_output\VMT_st_ft_Summary.txt
+  AdjSHP: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Activity_output\Adjusted_SHP.txt
+  TotSHP: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Activity_output\SHP.txt
+  ONI: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Activity_output\ONI.txt
+  APU_SHEI: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Activity_output\Hotelling_Hours.txt
+  Starts: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Activity_output\Start.txt
 act_out_fi: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary\activityDetailed.csv
 emis_out_fi: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary\emissionDetailed.csv
 xmlscc_csv_out_fi: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary\xmlSCCStagingTable.csv
-xmlscc_xml_out_fi: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary\HGB2026p1fr.xml
+xmlscc_xml_out_fi: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary\AUS2020swkd.xml
 agg_tab_out_fi: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary\aggregateTable.xlsx
 xml_data:
   Header:
-    id: HGB_20
+    id: AUS_20swkd
     AuthorName: Mogwai Turner
     OrganizationName: Texas Commission on Environmental Quality
     DocumentTitle: EIS
@@ -135,7 +103,7 @@ xml_data:
   Payload:
     UserIdentifier: XMTURN02
     ProgramSystemCode: TXCEQ
-    EmissionsYear: '2026'
+    EmissionsYear: '2020'
     Model: MOVES
     ModelVersion: MOVES3.0.3
     SubmittalComment: AERR MOVES 3.0.3-based 2020 annual on-road inventories for 254

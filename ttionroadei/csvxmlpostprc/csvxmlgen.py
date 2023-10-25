@@ -111,6 +111,18 @@ class CsvXmlGen:
         )
         self.sutFtfun = lambda df: df.sutLab + "_" + df.ftLab
 
+    def qc_input_units_and_conversion(self, _emis_tmp1):
+        try:
+            if set() != set(_emis_tmp1.emissionunits.unique()) - set(
+                self.conversion_factor.input_units.values
+            ):
+                raise ValueError(
+                    "The input units selected through the GUI do not match units in the utilities output."
+                )
+        except ValueError as verr:
+            self.logger.error(msg=f"{verr}")
+            raise
+
     def _emisprc(self, dev_w_mvs3):
         """
         This method processes emissions data, applies filters, and formats it for
@@ -172,23 +184,14 @@ class CsvXmlGen:
                 ls_df.append(df2)
         _emis_tmp = pd.concat(ls_df)
         _emis_tmp1 = self.outpollutants.merge(_emis_tmp, on="pollutantID", how="left")
-        try:
-            if set() != set(_emis_tmp1.emissionunits.unique()) - set(
-                self.conversion_factor.input_units.values
-            ):
-                raise ValueError(
-                    "The input units selected through the GUI do not match units in the utilities output."
-                )
-            _emis = (
-                _emis_tmp1.rename(columns={"emissionunits": "input_units"})
-                .merge(self.conversion_factor, on="input_units")
-                .assign(emission=lambda df: df.emission * df.confactor)
-                .drop(columns=["input_units", "confactor"])
-                .rename(columns={"output_units": "emissionunits"})
-            )
-        except ValueError as verr:
-            self.logger.error(msg=f"{verr}")
-            raise
+        self.qc_input_units_and_conversion(_emis_tmp1)
+        _emis = (
+            _emis_tmp1.rename(columns={"emissionunits": "input_units"})
+            .merge(self.conversion_factor, on="input_units")
+            .assign(emission=lambda df: df.emission * df.confactor)
+            .drop(columns=["input_units", "confactor"])
+            .rename(columns={"output_units": "emissionunits"})
+        )
         return _emis
 
     def _actprc(self, dev_w_mvs3):
@@ -270,7 +273,11 @@ class CsvXmlGen:
             item for sublist in self.settings["csvxml_act"].values() for item in sublist
         ]
         return (
-            df_.merge(self.area_rdtype_df, on=["funcClassID", "areaTypeID"], how="left")
+            df_.merge(
+                self.area_rdtype_df,
+                on=["area", "funcClassID", "areaTypeID"],
+                how="left",
+            )
             .merge(self.labels["moves_roadtypes"], on="mvsRoadTypeID")
             .merge(self.labels["moves_sut"], on="sourceUseTypeID")
             .merge(self.labels["moves_ft"], on="fuelTypeID")
@@ -307,7 +314,11 @@ class CsvXmlGen:
                 on="processID",
                 how="left",
             )
-            .merge(self.area_rdtype_df, on=["funcClassID", "areaTypeID"], how="left")
+            .merge(
+                self.area_rdtype_df,
+                on=["area", "funcClassID", "areaTypeID"],
+                how="left",
+            )
             .merge(self.labels["moves_roadtypes"], on="mvsRoadTypeID")
             .merge(self.labels["moves_sut"], on="sourceUseTypeID")
             .merge(self.labels["moves_ft"], on="fuelTypeID")
@@ -319,6 +330,28 @@ class CsvXmlGen:
             )
             .filter(items=columns)
         )
+
+    def qc_areardtype(self, emis_out, act_out):
+        data_areardtype = (
+            emis_out[["areaTypeID", "funcClassID"]]
+            .drop_duplicates()
+            .reset_index(drop=True)
+            .assign(type="data")
+        )
+        mapping_used = self.area_rdtype_df[["areaTypeID", "funcClassID"]].assign(
+            type="mapping"
+        )
+        test = data_areardtype.merge(
+            mapping_used, on=["areaTypeID", "funcClassID"], how="left"
+        )
+        try:
+            assert test.type_y.isna().sum() == 0
+        except AssertionError as aserr:
+            self.logger.error(
+                "Incorrect road type and area type mapping used. "
+                "Switch from TDM to HPMS or vice-versa in `self.use_tdm_area_rdtype` in `GUI.py`"
+            )
+            raise
 
     def detailedcsvgen(self, dev_w_mvs3=True):
         """
@@ -343,6 +376,7 @@ class CsvXmlGen:
                 dayType=self.daytypes_selected * len(act_df),
                 season=self.seasons_selected * len(act_df),
                 year=self.years_selected * len(act_df),
+                area=[self.area_selected] * len(act_df),
             )
         act_out = self.act_add_labs(act_df)
         self.logger.info(msg="Processed activity data.")
@@ -353,7 +387,9 @@ class CsvXmlGen:
                 dayType=self.daytypes_selected * len(emis_df),
                 season=self.seasons_selected * len(emis_df),
                 year=self.years_selected * len(emis_df),
+                area=[self.area_selected] * len(emis_df),
             )
+        self.qc_areardtype(emis_df, act_df)
         emis_out = self.emis_add_labs(emis_df)
         self.logger.info(msg="Processed emission data.")
         return {"act": act_out, "emis": emis_out}

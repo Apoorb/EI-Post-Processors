@@ -148,8 +148,7 @@ class PostProcessorGUI:
         self.pollutant_map = dict()
         self.pollutant_codes_selected = tuple()
         self.pollutant_map_codes_selected = dict()
-        self.use_tdm_area_rdtype = True
-        self.use_hpms_area_rdtype = False
+        self.use_tdm_area_rdtype = bool()
         self.tdm_hpms_rdtype = pd.DataFrame()
         self.tdm_hpms_rdtype_flt = pd.DataFrame()
         self.input_units = dict()
@@ -177,10 +176,8 @@ class PostProcessorGUI:
         post-processing workflow, such as input data directories and output directories.
         """
         self.ei_dir = Path(
-            r"E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - "
-            r"FY2022_HGB2026_"
-            r"\_Tasks\Task 3\ad19hgb26_mvs33_w\ad19hgb26_mvs33_p\HGB\2026\p1fr"
-            r"\Outputs\Emission_output"
+            r"C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_aus_mvs31"
+            r"\2020AERR_aus_mvs31_p\AUS\2020\swkd\Outputs\Emission_output"
         )
         self.ei_fis_EMS = {
             "OnRoad": self.ei_dir.joinpath("emission_output_VMT.txt"),
@@ -213,11 +210,7 @@ class PostProcessorGUI:
             "Starts": self.offroadact_dir.joinpath("Start.txt"),
         }
         # TODO: Read from CG's Database.
-        self.fi_temp_tdm_hpms_rdtype = (
-            r"E:\Texas A&M Transportation Institute"
-            r"\HMP - TCEQ Projects - FY2024_Utility_Development\Resources\Input Data"
-            r"\Road Type Mapping\RoadType_Designation.csv"
-        )
+        self.fi_temp_tdm_hpms_rdtype = r"C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\RoadType_Designation.csv"
         self.output_yaml_file = Path(self.log_dir).joinpath(
             "postProcessorSelection.yaml"
         )
@@ -233,26 +226,23 @@ class PostProcessorGUI:
     def _get_roadtype(self):
         """Retrieve and process road type data from a mapping file."""
         # TODO: add error checking to see if the area exisits in the mapping file.
-        if self.use_tdm_area_rdtype or self.use_hpms_area_rdtype:
-            self.tdm_hpms_rdtype = pd.read_csv(self.fi_temp_tdm_hpms_rdtype)
-            self.tdm_hpms_rdtype = self.tdm_hpms_rdtype.drop(columns=["MOVES_RoadType"])
-            self.tdm_hpms_rdtype = self.tdm_hpms_rdtype.rename(
-                columns={
-                    "Area": "area",
-                    "TDM_FunctionClass_Code": "funcClassID",
-                    "FunctionClass": "funcClass",
-                    "TDM_AreaType_Code": "areaTypeID",
-                    "AreaType": "areaType",
-                    "MOVES_RoadTypeID": "mvsRoadTypeID",
-                }
-            )
+        self.tdm_hpms_rdtype = pd.read_csv(self.fi_temp_tdm_hpms_rdtype)
+        self.tdm_hpms_rdtype = self.tdm_hpms_rdtype.drop(columns=["MOVES_RoadType"])
+        self.tdm_hpms_rdtype = self.tdm_hpms_rdtype.rename(
+            columns={
+                "Area": "area",
+                "TDM_FunctionClass_Code": "funcClassID",
+                "FunctionClass": "funcClass",
+                "TDM_AreaType_Code": "areaTypeID",
+                "AreaType": "areaType",
+                "MOVES_RoadTypeID": "mvsRoadTypeID",
+            }
+        )
         area_sel = ""
         if self.use_tdm_area_rdtype:
             area_sel = self.area_selected
-        elif self.use_hpms_area_rdtype:
-            area_sel = "VLink"
         else:
-            area_sel = ""
+            area_sel = "VLink"
         try:
             self.tdm_hpms_rdtype_flt = self.tdm_hpms_rdtype[
                 lambda df: df.area == area_sel
@@ -274,6 +264,7 @@ class PostProcessorGUI:
         self.tdm_hpms_rdtype_flt = pd.concat(
             [self.tdm_hpms_rdtype_flt, off_net]
         ).reset_index(drop=True)
+        self.tdm_hpms_rdtype_flt["area"] = self.area_selected
 
     def provide_csv_options(self):
         """
@@ -385,21 +376,23 @@ class PostProcessorGUI:
         files based on the specified options. It includes the selection of emissions
         data categories, areas, counties, years, seasons, day types, and pollutant codes.
         """
-        self.EIs_selected = ["EMS", "TEC", "RF"]  #  "RF",
-        self.area_selected = "HGB"
+        self.EIs_selected = [
+            "EMS",
+        ]  #  "TEC", "RF"
+        self.area_selected = "AUS"
         self.FIPSs_selected = [
-            48201,
-            48039,
-            48157,
+            48021,
+            48053,
+            48453,
         ]
         self.years_selected = [
-            2026,
+            2020,
         ]
         self.seasons_selected = [
-            "p1",
+            "s",
         ]
         self.daytypes_selected = [
-            "fr",
+            "wkd",
         ]
         self.pollutant_codes_selected = ["CO", "NOx", "PM10", "PM25"]  # , "TEC"
         if "TEC" in self.EIs_selected:
@@ -422,7 +415,6 @@ class PostProcessorGUI:
         #  following columns:
         #  areaTypeId, areaType, roadTypeId, roadType, mvSroadTypeId, mvSroadType
         self.use_tdm_area_rdtype = True
-        self.use_hpms_area_rdtype = False
         self._get_roadtype()
         self.labels = get_labels(
             database_nm=settings.get("MOVES4_Default_DB"),
@@ -459,10 +451,10 @@ class PostProcessorGUI:
         seasons, day types, and other XML header information.
         """
         self.xml_pollutant_codes_selected = ["CO", "NOx", "PM10", "PM25"]
-        self.xml_year_selected = 2026
-        self.xml_season_selected = "p1"
-        self.xml_daytype_selected = "fr"
-        self.xml_data["Header"]["id"] = "HGB_20"
+        self.xml_year_selected = 2020
+        self.xml_season_selected = "s"
+        self.xml_daytype_selected = "wkd"
+        self.xml_data["Header"]["id"] = "AUS_20swkd"
         self.xml_data["Header"]["AuthorName"] = "Mogwai Turner"
         self.xml_data["Header"][
             "OrganizationName"
@@ -691,6 +683,11 @@ class PostProcessorGUI:
             self.logger.error(f"Error in XML generation: {err}")
             raise
         self.logger.info("Post-processing ended")
+
+    def qc_pp_selections(self):
+        # ToDo: Write validation test for selected parameters, based on the output of
+        #  main module.Such as, the season + daytype selected here match the output of main module.
+        ...
 
 
 if __name__ == "__main__":

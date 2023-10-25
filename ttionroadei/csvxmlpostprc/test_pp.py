@@ -1,5 +1,26 @@
 """
-Test post-processors are working as intended.
+Test post-processors to ensure they are working as intended.
+
+This script is designed to test the post-processors for different areas and scenarios.
+It performs various tests to verify the functionality of the post-processing tasks,
+comparing the results with expected outputs.
+
+The tests cover the following areas:
+- Activity data processing.
+- Emission data processing.
+- Aggregated data comparison with detailed CSV files.
+- Comparison of XML data with detailed CSV files.
+- Road area type testing.
+
+These tests help ensure that the post-processing steps are correctly transforming raw
+data into detailed CSV files and aggregated outputs.
+
+Please note that this script relies on various configuration parameters and data
+sources provided in the 'pp_param' dictionary and may require user-specific updates for testing.
+
+To run the tests, use pytest or another testing framework.
+Author: Apoorb
+Date: 10/25/2023
 """
 # ToDo: Test for different areas and scenarios!
 import pytest
@@ -9,6 +30,7 @@ import pandas as pd
 from pathlib import Path
 from itertools import chain
 import numpy as np
+import lxml
 from ttionroadei.utils import settings
 
 # Todo: User to update the following for testing.
@@ -35,6 +57,61 @@ pp_param["FIPSs_selected"]
 pp_param["years_selected"]
 pp_param["seasons_selected"]
 pp_param["daytypes_selected"]
+# Rename the columns in the raw activity and emission data from the main utility module.
+rename_act_cols = {
+    "County": "FIPS",
+    "Hour": "hour",
+    "SUT": "sourceUseTypeID",
+    "Soucetype": "sourceUseTypeID",
+    "Fueltype": "fuelTypeID",
+    "Roadtype": "funcClassID",
+    "Areatype": "areaTypeID",
+    "VMT Calculated": "VMT",
+    "VHT Calculated": "VHT",
+    "SHEI Calculated": "SHEI",
+    "APU Calculated": "APU",
+    "Adjust SHP Calculated": "activity",
+    "ONI Calculated": "activity",
+    "SHP Calculated": "activity",
+    "Starts Calculated": "activity",
+}
+rename_emis_cols = {
+    "County": "FIPS",
+    "Hour": "hour",
+    "SUT": "sourceUseTypeID",
+    "Soucetype": "sourceUseTypeID",
+    "Fueltype": "fuelTypeID",
+    "Roadtype": "funcClassID",
+    "Areatype": "areaTypeID",
+    "Pollutant": "pollutantID",
+    "Process": "processID",
+    "Adjusted SHP Emission": "emission",
+    "ONI Emission": "emission",
+    "VMT_Emission": "emission",
+    "Start Emission": "emission",
+    "Emission": "emission",
+    "Unit": "input_units",
+}
+# Read activity and emission data from the main utility.
+raw_act_data = {}
+for cat, fi in pp_param["act_fis"].items():
+    raw_act_data[cat] = pd.read_csv(fi, sep="\t").loc[
+        lambda df: (df.County.isin(pp_param["FIPSs_selected"]))
+    ]
+keep_polids = list(chain(*pp_param["pollutant_map_codes_selected"].values()))
+raw_emis_data = {}
+for ei in pp_param["EIs_selected"]:
+    raw_emis_data[ei] = {}
+    for cat, fi in pp_param[f"ei_fis_{ei}"].items():
+        raw_emis_data[ei][cat] = pd.read_csv(fi, sep="\t").loc[
+            lambda df: df.County.isin(pp_param["FIPSs_selected"])
+            & (df.Pollutant.isin(keep_polids))
+        ]
+
+# Detailed csv output
+act_detailed = pd.read_csv(pp_param["act_out_fi"])
+emis_detailed = pd.read_csv(pp_param["emis_out_fi"])
+# Keep the following columns in the detailed csv activity and emission data.
 keep_act_cols = [
     "area",
     "FIPS",
@@ -56,60 +133,7 @@ keep_emis_cols = [i for i in keep_act_cols if i not in ["activity"]] + [
     "emission",
     "EIType",
 ]
-rename_act_cols = {
-    "County": "FIPS",
-    "Hour": "hour",
-    "SUT": "sourceUseTypeID",
-    "Soucetype": "sourceUseTypeID",
-    "Fueltype": "fuelTypeID",
-    "Roadtype": "funcClassID",
-    "Areatype": "areaTypeID",
-    "VMT Calculated": "VMT",
-    "VHT Calculated": "VHT",
-    "SHEI Calculated": "SHEI",
-    "APU Calculated": "APU",
-    "Adjust SHP Calculated": "activity",
-    "ONI Calculated": "activity",
-    "SHP Calculated": "activity",
-    "Starts Calculated": "activity",
-}
-raw_act_data = {}
-for cat, fi in pp_param["act_fis"].items():
-    raw_act_data[cat] = pd.read_csv(fi, sep="\t").loc[
-        lambda df: (df.County.isin(pp_param["FIPSs_selected"]))
-    ]
-keep_polids = list(chain(*pp_param["pollutant_map_codes_selected"].values()))
-raw_emis_data = {}
-for ei in pp_param["EIs_selected"]:
-    raw_emis_data[ei] = {}
-    for cat, fi in pp_param[f"ei_fis_{ei}"].items():
-        raw_emis_data[ei][cat] = pd.read_csv(fi, sep="\t").loc[
-            lambda df: df.County.isin(pp_param["FIPSs_selected"])
-            & (df.Pollutant.isin(keep_polids))
-        ]
-
-# Detailed csv output
-act_detailed = pd.read_csv(pp_param["act_out_fi"])
-emis_detailed = pd.read_csv(pp_param["emis_out_fi"])
-
-# Configuration for matching raw to detailed csv
-rename_emis_cols = {
-    "County": "FIPS",
-    "Hour": "hour",
-    "SUT": "sourceUseTypeID",
-    "Soucetype": "sourceUseTypeID",
-    "Fueltype": "fuelTypeID",
-    "Roadtype": "funcClassID",
-    "Areatype": "areaTypeID",
-    "Pollutant": "pollutantID",
-    "Process": "processID",
-    "Adjusted SHP Emission": "emission",
-    "ONI Emission": "emission",
-    "VMT_Emission": "emission",
-    "Start Emission": "emission",
-    "Emission": "emission",
-    "Unit": "input_units",
-}
+# Conversion factors for converting emission in the raw data units to detailed csv units.
 conv_fac_map = {
     pp_param["conversion_factor"]["input_units"][0]: pp_param["conversion_factor"][
         "confactor"
@@ -118,6 +142,7 @@ conv_fac_map = {
         "confactor"
     ][1],
 }
+# Test data for `test_act`
 act_test_data = [
     ("AdjSHP", ["AdjSHP"], ["FIPS", "hour", "sourceUseTypeID", "fuelTypeID"]),
     ("ONI", ["ONI"], ["FIPS", "hour", "sourceUseTypeID", "fuelTypeID"]),
@@ -142,6 +167,7 @@ act_test_data = [
         ],
     ),
 ]
+# Test data for `test_emis`
 emis_test_data = [
     (
         "Starts",
@@ -208,25 +234,73 @@ emis_test_data = [
         ],
     ),
 ]
-
-
 # Test inputs for aggregate sheet comparison with detailed csv.
 #######################################################################################
 x1 = pd.ExcelFile(pp_param["agg_tab_out_fi"])
 act_sheets = [sheet for sheet in x1.sheet_names if sheet.split("_")[1] == "act"]
 emis_sheets = [sheet for sheet in x1.sheet_names if sheet.split("_")[1] == "emis"]
 
-for sheet in act_sheets:
-    df = x1.parse(sheet)
-    idx_cols = [
-        i
-        for i in df.columns
-        if i not in ("activityunits", "activity", "emission", "emissionunit")
-    ]
-x1.parse("aggByRdSutFt_emis").columns
-x1.parse("aggByRdSutFt_act").columns
-act_detailed.groupby(idx_cols, as_index=False).activity.sum()
-act_detailed.groupby(idx_cols, as_index=False).activity.sum()
+# Read the XML
+#######################################################################################
+def read_xml(
+    path_xml=pp_param["xmlscc_xml_out_fi"],
+    ns={
+        "cer": "http://www.exchangenetwork.net/schema/cer/2",
+        "hdr": "http://www.exchangenetwork.net/schema/header/2",
+        "xsi": "http://www.w3.org/2001/XMLSchema-instance",
+    },
+):
+    parser = lxml.etree.XMLParser(remove_blank_text=True)
+    tree = lxml.etree.parse(str(path_xml), parser)
+    rt = tree.getroot()
+    ns = rt.nsmap
+    cntyelems = rt.findall(".//cer:StateAndCountyFIPSCode", ns)
+    pollutantCode, emission, sccNEI, FIPS, E6MILE = [], [], [], [], []
+    for cntyelem in cntyelems:
+        for rptper in cntyelem.getparent().findall(
+            ".//cer:ReportingPeriodEmissions", ns
+        ):
+            poltmp = [rptper.find("cer:PollutantCode", ns).text]
+            emistmp = [float(rptper.find("cer:TotalEmissions", ns).text)]
+            cntystmp = [
+                int(
+                    rptper.getparent()
+                    .getparent()
+                    .getparent()
+                    .find(".//cer:StateAndCountyFIPSCode", ns)
+                    .text
+                )
+            ]
+            sccstmp = [
+                int(
+                    rptper.getparent()
+                    .getparent()
+                    .find(".//cer:SourceClassificationCode", ns)
+                    .text
+                )
+            ]
+            vmttmp = [
+                float(
+                    rptper.getparent().find(".//cer:CalculationParameterValue", ns).text
+                )
+            ]
+            pollutantCode += list(poltmp)
+            emission += list(emistmp)
+            sccNEI += list(sccstmp)
+            FIPS += list(cntystmp)
+            E6MILE += list(vmttmp)
+
+    daxml = pd.DataFrame(
+        dict(
+            sccNEI=sccNEI,
+            FIPS=FIPS,
+            E6MILE=E6MILE,
+            pollutantCode=pollutantCode,
+            emission=emission,
+        )
+    )
+    return daxml
+
 
 # Test
 #######################################################################################
@@ -236,6 +310,35 @@ act_detailed.groupby(idx_cols, as_index=False).activity.sum()
     ids=["AdjSHP", "ONI", "Starts", "TotSHP", "APU_SHEI", "OnRoad"],
 )
 def test_act(acttype_in, acttype_out, idx):
+    """
+    Test activity data processing.
+
+    Parameters
+    ----------
+    acttype_in : str
+        Input activity type.
+
+    acttype_out : str
+        Detailed csv output activity type.
+
+    idx : list
+        List of index columns for joining input and output.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    AssertionError
+        If the test fails and the data doesn't match as expected.
+
+    Notes
+    -----
+    This test function compares the activity data processing for a specific activity type with the expected output type.
+    It checks whether the transformation of raw activity data to detailed CSV data is performed correctly.
+    The 'idx' parameter specifies the columns used for comparison.
+    """
     raw_act_data_filt = raw_act_data[acttype_in].rename(columns=rename_act_cols)
     if acttype_in == "APU_SHEI":
         raw_act_data_filt = raw_act_data_filt.melt(
@@ -289,6 +392,34 @@ def test_act(acttype_in, acttype_out, idx):
     ids=["Starts", "AdjSHP", "ONI", "APU", "SHEI", "VMT"],
 )
 def test_emission(acttype_in, acttype_out, idx):
+    """
+    Test emission data processing.
+
+    Parameters
+    ----------
+    acttype_in : str
+        Input activity type.
+
+    acttype_out : str
+        Detailed csv output activity type.
+
+    idx : list
+        List of index columns for joining input and output.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    AssertionError
+        If the test fails and the data doesn't match as expected.
+
+    Notes
+    -----
+    This test function compares the emission data processing for a specific emission activity type with the expected output type.
+    It checks whether the transformation of raw emission data to detailed CSV data is performed correctly.
+    """
     ls_df = []
     for ei in pp_param["EIs_selected"]:
         if (ei != "EMS") & (acttype_out == "AdjSHP"):
@@ -322,6 +453,27 @@ def test_emission(acttype_in, acttype_out, idx):
 
 @pytest.mark.parametrize("act_sheet", act_sheets, ids=act_sheets)
 def test_agg_act_xlsx_eq_detailed(act_sheet):
+    """
+    Test aggregated activity data by comparing it with detailed CSV data.
+
+    Parameters
+    ----------
+    act_sheet : str
+        Name of the aggregated activity sheet.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    AssertionError
+        If the test fails and the data doesn't match as expected.
+
+    Notes
+    -----
+    This test function compares the data from an aggregated activity sheet with the corresponding data in the detailed CSV file.
+    """
     out_df = x1.parse(act_sheet)
     idx_cols = [
         i
@@ -339,6 +491,28 @@ def test_agg_act_xlsx_eq_detailed(act_sheet):
 
 @pytest.mark.parametrize("emis_sheet", emis_sheets, ids=emis_sheets)
 def test_agg_emis_xlsx_eq_detailed(emis_sheet):
+    """
+    Test aggregated emission data by comparing it with detailed CSV data.
+
+    Parameters
+    ----------
+    emis_sheet : str
+        Name of the aggregated emission sheet.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    AssertionError
+        If the test fails and the data doesn't match as expected.
+
+    Notes
+    -----
+    This test function compares the data from an aggregated emission sheet with the corresponding data in the detailed CSV file.
+    It checks if the aggregated data matches the detailed CSV data.
+    """
     out_df = x1.parse(emis_sheet)
     idx_cols = [
         i
@@ -351,6 +525,23 @@ def test_agg_emis_xlsx_eq_detailed(emis_sheet):
 
 
 def test_xmlcsv_eq_detailed():
+    """
+    Test XML data by comparing it with detailed CSV data.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    AssertionError
+        If the test fails and the data doesn't match as expected.
+
+    Notes
+    -----
+    This test function compares the data from an XML file with the corresponding data in a CSV file.
+    It checks if the XML data matches the detailed CSV data.
+    """
     # Todo: need to filter year, season, and daytype when we add them
     out_df = pd.read_csv(pp_param["xmlscc_csv_out_fi"])
     idx_cols = [
@@ -368,17 +559,16 @@ def test_xmlcsv_eq_detailed():
 
 
 def test_xml_eq_detailed():
-    pp_param["xmlscc_xml_out_fi"]
-    pp_param["xml_year_selected"]
-    pp_param["xml_season_selected"]
-    pp_param["xml_daytype_selected"]
-    pp_param["xml_pollutant_codes_selected"]
-    pp_param["xml_data"]
-
-
-pp_param["fi_temp_tdm_hpms_rdtype"]
-pp_param["use_tdm_area_rdtype"]
+    """Test if the XML values are equal to the XML csv."""
+    csv_xml = pd.read_csv(pp_param["xmlscc_csv_out_fi"])
+    df_xml = read_xml()
+    comp_df = df_xml.merge(csv_xml, on=["FIPS", "sccNEI", "pollutantCode"], how="outer")
+    assert np.allclose(comp_df.emission_x, comp_df.emission_y) & np.allclose(
+        comp_df.E6MILE_x, comp_df.E6MILE_y
+    )
 
 
 def test_roadareatype():
-    ...
+    pp_param["fi_temp_tdm_hpms_rdtype"]
+    pp_param["use_tdm_area_rdtype"]
+    # Todo: write test

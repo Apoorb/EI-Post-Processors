@@ -39,13 +39,13 @@ xml_pollutant_codes_selected:
 - PM25
 conversion_factor:
   input_units:
-    0: short_ton
+    0: grams
     1: Kilojoules
   output_units:
     0: short_ton
     1: MBTU
   confactor:
-    0: 1.0
+    0: 1.1023113109243878e-06
     1: 9.478169879134377e-07
 fi_temp_tdm_hpms_rdtype: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\RoadType_Designation.csv
 use_tdm_area_rdtype: true

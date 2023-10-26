@@ -175,11 +175,17 @@ class PostProcessorGUI:
         This method initializes paths to directories and files used in the
         post-processing workflow, such as input data directories and output directories.
         """
+        # ToDo: Update paths
         self.ei_dir = Path(
-            r"C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\
-            2020AERR_tlm_tdm_mvs31\2020AERR_tlm_tdm_mvs31\2020AERR_tlm_tdm_mvs31_p"
-            r"\TYL\2020\swkd\Outputs\Emission_output"
+            r"E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Emission_output"
         )
+        ################################################################################
+        # TODO: Read from CG's Database.
+        self.fi_temp_tdm_hpms_rdtype = r"E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\RoadType_Designation.csv"
+        self.out_dir_pp = Path(
+            r"E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\LGV_Vlink_Summary"
+        )
+        ################################################################################
         self.ei_fis_EMS = {
             "OnRoad": self.ei_dir.joinpath("emission_output_VMT.txt"),
             "APU": self.ei_dir.joinpath("emission_output_APU.txt"),
@@ -210,13 +216,8 @@ class PostProcessorGUI:
             "APU_SHEI": self.offroadact_dir.joinpath("Hotelling_Hours.txt"),
             "Starts": self.offroadact_dir.joinpath("Start.txt"),
         }
-        # TODO: Read from CG's Database.
-        self.fi_temp_tdm_hpms_rdtype = r"C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\RoadType_Designation.csv"
         self.output_yaml_file = Path(self.log_dir).joinpath(
             "postProcessorSelection.yaml"
-        )
-        self.out_dir_pp = Path(
-            r"C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary"
         )
         self.out_dir_pp.mkdir(exist_ok=True)
         self.act_out_fi = self.out_dir_pp.joinpath("activityDetailed.csv")
@@ -241,7 +242,7 @@ class PostProcessorGUI:
         )
         area_sel = ""
         if self.use_tdm_area_rdtype:
-            if self.area_selected == "TYL":
+            if (self.area_selected == "TYL") | (self.area_selected == "LGV"):
                 area_sel = "TLM"
             else:
                 area_sel = self.area_selected
@@ -383,9 +384,10 @@ class PostProcessorGUI:
         self.EIs_selected = [
             "EMS",
         ]  #  "TEC", "RF"
-        self.area_selected = "TYL"
+        self.area_selected = "LGV"
         self.FIPSs_selected = [
-            48423,
+            48203,
+            48401
         ]
         self.years_selected = [
             2020,
@@ -416,7 +418,7 @@ class PostProcessorGUI:
         # TODO: Give option to provide custom mapping of road types based on
         #  following columns:
         #  areaTypeId, areaType, roadTypeId, roadType, mvSroadTypeId, mvSroadType
-        self.use_tdm_area_rdtype = True
+        self.use_tdm_area_rdtype = False
         self._get_roadtype()
         self.labels = get_labels(
             database_nm=settings.get("MOVES4_Default_DB"),

@@ -1,12 +1,13 @@
 EIs_selected:
 - EMS
-area_selected: ELP
+area_selected: LGV
 FIPSs_selected:
-- 48141
+- 48203
+- 48401
 years_selected:
 - 2020
 seasons_selected:
-- w
+- s
 daytypes_selected:
 - wkd
 pollutant_map_codes_selected:
@@ -28,7 +29,7 @@ pollutant_codes_selected:
 - PM10
 - PM25
 xml_year_selected: 2020
-xml_season_selected: w
+xml_season_selected: s
 xml_daytype_selected: wkd
 xml_pollutant_codes_selected:
 - CO
@@ -45,46 +46,47 @@ conversion_factor:
   confactor:
     0: 1.1023113109243878e-06
     1: 9.478169879134377e-07
-fi_temp_tdm_hpms_rdtype: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\RoadType_Designation.csv
-use_tdm_area_rdtype: true
+fi_temp_tdm_hpms_rdtype: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects
+  - FY2024_Utility_Development\Code_Development\AB\RoadType_Designation.csv
+use_tdm_area_rdtype: false
 gendetailedcsvfiles: true
 genaggpivfiles: true
 genxmlfile: true
 ei_base_dir: null
 log_dir: ./logs
-ei_dir: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Emission_output
-summary_dir: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary
+ei_dir: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Emission_output
+summary_dir: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\LGV_Vlink_Summary
 ei_fis_EMS:
-  OnRoad: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Emission_output\emission_output_VMT.txt
-  APU: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Emission_output\emission_output_APU.txt
-  ONI: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Emission_output\emission_output_ONI.txt
-  SHEI: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Emission_output\emission_output_SHEI.txt
-  SHP: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Emission_output\emission_output_SHP.txt
-  Starts: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Emission_output\emission_output_Starts.txt
+  OnRoad: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Emission_output\emission_output_VMT.txt
+  APU: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Emission_output\emission_output_APU.txt
+  ONI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Emission_output\emission_output_ONI.txt
+  SHEI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Emission_output\emission_output_SHEI.txt
+  SHP: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Emission_output\emission_output_SHP.txt
+  Starts: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Emission_output\emission_output_Starts.txt
 ei_fis_RF:
-  OnRoad: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Emission_output\RF_emission_output_VMT.txt
-  APU: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Emission_output\RF_emission_output_APU.txt
-  ONI: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Emission_output\RF_emission_output_ONI.txt
-  SHEI: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Emission_output\RF_emission_output_SHEI.txt
-  Starts: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Emission_output\RF_emission_output_Starts.txt
+  OnRoad: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Emission_output\RF_emission_output_VMT.txt
+  APU: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Emission_output\RF_emission_output_APU.txt
+  ONI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Emission_output\RF_emission_output_ONI.txt
+  SHEI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Emission_output\RF_emission_output_SHEI.txt
+  Starts: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Emission_output\RF_emission_output_Starts.txt
 ei_fis_TEC:
-  OnRoad: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Emission_output\TEC_emission_output_VMT.txt
-  APU: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Emission_output\TEC_emission_output_APU.txt
-  ONI: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Emission_output\TEC_emission_output_ONI.txt
-  SHEI: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Emission_output\TEC_emission_output_SHEI.txt
-  Starts: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Emission_output\TEC_emission_output_Starts.txt
+  OnRoad: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Emission_output\TEC_emission_output_VMT.txt
+  APU: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Emission_output\TEC_emission_output_APU.txt
+  ONI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Emission_output\TEC_emission_output_ONI.txt
+  SHEI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Emission_output\TEC_emission_output_SHEI.txt
+  Starts: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Emission_output\TEC_emission_output_Starts.txt
 act_fis:
-  OnRoad: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Summarized_output\VMT_st_ft_Summary.txt
-  AdjSHP: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Activity_output\Adjusted_SHP.txt
-  TotSHP: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Activity_output\SHP.txt
-  ONI: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Activity_output\ONI.txt
-  APU_SHEI: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Activity_output\Hotelling_Hours.txt
-  Starts: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\2020AERR_elp_mvs31\2020AERR_elp_mvs31_p\ELP\2020\wwkd\Outputs\Activity_output\Start.txt
-act_out_fi: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary\activityDetailed.csv
-emis_out_fi: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary\emissionDetailed.csv
-xmlscc_csv_out_fi: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary\xmlSCCStagingTable.csv
-xmlscc_xml_out_fi: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary\ELP2020wwkd.xml
-agg_tab_out_fi: C:\Users\a-bibeka\Documents\Projects_Temp\Utilities_FY24\Summary\aggregateTable.xlsx
+  OnRoad: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Summarized_output\VMT_st_ft_Summary.txt
+  AdjSHP: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Activity_output\Adjusted_SHP.txt
+  TotSHP: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Activity_output\SHP.txt
+  ONI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Activity_output\ONI.txt
+  APU_SHEI: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Activity_output\Hotelling_Hours.txt
+  Starts: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31\2020AERR_tlm_vlink_mvs31_p\Vlink\2020\swkd\Outputs\Activity_output\Start.txt
+act_out_fi: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\LGV_Vlink_Summary\activityDetailed.csv
+emis_out_fi: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\LGV_Vlink_Summary\emissionDetailed.csv
+xmlscc_csv_out_fi: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\LGV_Vlink_Summary\xmlSCCStagingTable.csv
+xmlscc_xml_out_fi: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\LGV_Vlink_Summary\LGV2020swkd.xml
+agg_tab_out_fi: E:\Texas A&M Transportation Institute\HMP - TCEQ Projects - FY2024_Utility_Development\Code_Development\AB\LGV_Vlink_Summary\aggregateTable.xlsx
 xml_data:
   Header:
     id: ELP_20wwkd
